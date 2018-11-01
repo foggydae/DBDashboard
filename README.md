@@ -2,5 +2,5 @@
 
 #### Current Progress:
 
-![ScreenShot](./images/ScreenShot.png)
+![ScreenShot](./images/screenshot.png)
 
