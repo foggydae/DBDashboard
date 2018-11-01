@@ -31,7 +31,7 @@
 
 		<div id="main-container" class="container row">
 			<div class="col-sm-4 full-height">
-				<div id="hierarchy-container" class="view-container">hierarchy view</div>
+				<div id="hierarchy-container" class="view-container"></div>
 			</div>
 			<div class="col-sm-8 full-height no-rt-pd">
 				<div id="third-container">
@@ -70,6 +70,7 @@
 		<script type="text/javascript" src="/static/libs/L.D3SvgOverlay.min.js"></script>
 
 		<!-- map layer -->
+		<script type="text/javascript" src="/static/scripts/hierarchy_view.js"></script>
 		<!-- <script type="text/javascript" src="/static/scripts/draw_station_layer.js"></script> -->
 		<!-- init map -->
 		<script type="text/javascript">
@@ -96,6 +97,8 @@
 		baseMapLayer_light.addTo(map);
 		// baseMapLayer_standard.addTo(map);
 
+		init_hierarchy_view();
+		
 		</script>
 	</body>
 </html>

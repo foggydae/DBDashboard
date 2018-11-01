@@ -63,7 +63,6 @@ function draw_station_layer (curMap) {
 				.attr('r', cellR)
 				.attr('fill', "#FFFFFF")
 				.attr("stroke", "none");
-
 		}
 
 		// 向后端请求数据

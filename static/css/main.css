@@ -71,3 +71,29 @@ body {
 	height: 100%;
 }
 
+/**********************/
+/*** Hierarchy View ***/
+/**********************/
+
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+   
+.node text {
+    font-size:12px; 
+    font-family:sans-serif;
+}
+   
+.link {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 1.5px;
+}
+
+
