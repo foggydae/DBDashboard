@@ -4,111 +4,98 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<meta name="description" content="assignment 20170405">
-		<meta name="author" content="ren.zuo, sijia.liu">
+		<meta name="description" content="D&B Dataset Dashboard for Eaton">
+		<meta name="author" content="Baihui Huang, Shawn Li, Emma Wei, Ren Zuo">
 
-		<title>地铁线路查询系统</title>
+		<title>D&B Dataset Dashboard</title>
 
-		<!-- bootstrap CSS 框架 -->
 		<link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
-		<!-- 本来准备用图标，后来实际上没有用上 -->
 		<link rel="stylesheet" type="text/css" href="/static/css/font-awesome-4.7.0/css/font-awesome.min.css">
-		<!-- 画地图用，地图使用了leaflet库，这是其中的CSS配套文件 -->
 		<link rel="stylesheet" type="text/css" href="/static/css/leaflet.css">
-		<!-- 所有自定义CSS -->
 		<link rel="stylesheet" type="text/css" href="/static/css/main.css">
 	</head>
 
 	<body>
-		<!-- 导航栏，系统标题和作者落款所在地，基本使用bootstrap原生标题栏，稍有改动 -->		
 		<nav class="navbar navbar-inverse navbar-fixed-top">
 			<div class="container">
 				<div class="navbar-header">
-					<a class="navbar-brand" href="#">地铁线路查询系统</a>
+					<a class="navbar-brand" href="#">D&B Dashboard</a>
 				</div>
 				<div id="navbar" class="collapse navbar-collapse">
 					<div class="navbar-form navbar-right">
-						<a class="author-info" href="#">刘思嘉，左任</a>
+						<a class="author-info" href="#"></a>
 					</div>
-				</div><!--/.nav-collapse -->
+				</div>
 			</div>
 		</nav>
-		<!-- 左侧的操作栏，上下又分为输入栏和显示栏 -->
-		<div id='action-window'>
-			<!-- 输入栏部分，包括两个输入框和一个按钮 -->
-			<div id='form-container'>
-				<!-- 原本是想用form的，后来其实没有用form进行请求的发送 -->
-				<form role="form" action="" method="post">
-					<!-- 输入出发站点 -->
-					<div class="form-group">
-						<label class="sr-only" for="start_station">出发站点</label>
-						<input type="text" name="start_station" placeholder="出发站点..." class="form-control" id="form-start-station">
-					</div>
-					<!-- 输入结束站点 -->
-					<div class="form-group">
-						<label class="sr-only" for="end_station">到达站点</label>
-						<input type="text" name="end_station" placeholder="到达站点..." class="form-control" id="form-end-station">
-					</div>
-					<div class="btn-group">
-						<!-- 这里原本准备用form的commit进行请求发送，也就是说type是commit而非button。但是后来因为对返回数据的处理较多，所以改成了button而非commit，请求也没有使用原生的commit，而是用jQuery的ajax，详见相应的js部分 -->
-						<button type="button" class="btn log-btn">查询</button>
-					</div>
-				</form>
+
+		<div id="main-container" class="container row">
+			<div class="col-sm-4 full-height">
+				<div id="hierarchy-container" class="view-container">hierarchy view</div>
 			</div>
-			<!-- 显示栏部分 -->
-			<div id='table-container'>
-				<!-- 首先是一个对输入的不同情况进行回应的文字部分，这一部分在表格显示时会被省略 -->
-				<p id='input-instruction'>请输入起止站点，单击查询获得换乘信息</p>
-				<!-- 表格默认是空的，查到路径数据之后，才会通过jQuery填满 -->
-				<table class='table table-striped' id='traj-table'>
-					<tbody>
-					</tbody>
-				</table>
-			</div>
-		</div>
-		<!-- 地图栏，只留一个canvas在这儿，绘制工作全是由js完成的 -->
-		<div id='map-container'>
-			<div id='map-canvas'>
+			<div class="col-sm-8 full-height no-rt-pd">
+				<div id="third-container">
+					<div class="col-sm-3 full-height">
+						<div id="search-container" class="view-container">search view</div>
+					</div>
+					<div class="col-sm-5 full-height">
+						<div id="tornado-container" class="view-container">tornado view</div>
+					</div>
+					<div class="col-sm-2 full-height">
+						<div id="detail-one-container" class="view-container">detail view</div>
+					</div>
+					<div class="col-sm-2 full-height">
+						<div id="detail-two-container" class="view-container">detail view</div>
+					</div>
+				</div>
+				<div id="forth-container">
+					<div class="col-sm-10 full-height">
+						<div id="map-container" class="view-container">
+							<div id="map-canvas">
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-2 full-height">
+						<div id="stat-container" class="view-container">stat view</div>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<!-- 引用的几个库，jQuery到处都有用，d3用于在地图上画路线，leaflet用来画地图，L.D3SvgOverlay用来辅助更方便在leaflet的地图上用d3画svg -->
+
+
 		<script type="text/javascript" src="/static/libs/jquery.min.js"></script>
 		<script type="text/javascript" src="/static/libs/d3.min.js"></script>
 		<script type="text/javascript" src="/static/libs/leaflet.js"></script>
 		<script type="text/javascript" src="/static/libs/L.D3SvgOverlay.min.js"></script>
-		<!-- 地图部分的js代码 -->
-		<script type="text/javascript" src="/static/scripts/draw_station_layer.js"></script>
-		<!-- 操作栏部分的js代码 -->
-		<script type="text/javascript" src="/static/scripts/draw_action_window.js"></script>
-		<!-- 画地图的js代码 -->
+
+		<!-- map layer -->
+		<!-- <script type="text/javascript" src="/static/scripts/draw_station_layer.js"></script> -->
+		<!-- init map -->
 		<script type="text/javascript">
 
 		// GLOBAL VARIABLES
 		var latlng = {
-			beijing: [39.92, 116.40],
+			United_State: [39.8283, -98.5795],
 		};
 		var zoom = {
-			beijing: 11,
+			United_State: 4,
 		};
-		var globalCurCity = "beijing";
+		var globalCurCity = "United_State";
 
-		// 在map-canvas这个div中放地图
+		// put map to map-canvas
 		var map = L.map("map-canvas").setView(latlng[globalCurCity], zoom[globalCurCity]);
 		var baseMapLayer_light = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
 			attribution: ''
 		});
-		// 另一种地图，但是最终没有被使用
+		// another version of the map
 		var baseMapLayer_standard = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 			attribution: ''
 		});
-		// 加载地图
+		// load the map
 		baseMapLayer_light.addTo(map);
 		// baseMapLayer_standard.addTo(map);
 
-		// 这两个函数的具体内容都在相应的文件中
-		draw_station_layer(map);
-		draw_action_window();
 		</script>
 	</body>
 </html>

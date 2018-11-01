@@ -1,111 +1,73 @@
-/*CSS……就不写注释了叭……*/
-body {
-  padding-top: 50px;
-  height: 100%;
-}
-
+/**********************/
+/* Override Bootstrap */
+/**********************/
 .container{
 	width: 100%;
 	margin-left: 0px;
 	margin-right: 0px;
 }
 
-.navbar-form {
-	margin-top: 14px;
+.col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, 
+.col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-md-1, .col-md-10, 
+.col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, 
+.col-md-7, .col-md-8, .col-md-9, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, 
+.col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, 
+.col-sm-9, .col-xs-1, .col-xs-10, .col-xs-11, .col-xs-12, .col-xs-2, .col-xs-3, 
+.col-xs-4, .col-xs-5, .col-xs-6, .col-xs-7, .col-xs-8, .col-xs-9 {
+	padding-left: 5px;
+	padding-right: 5px;
 }
 
-.navbar-right a.author-info {
-	padding-top: 15px;
-	padding-bottom: 15px;
-	color: #9d9d9d;
-	font-size: 15px;
-	vertical-align: middle;
-	line-height: 20px;
+.navbar-header {
+	padding-left: 5px;
 }
 
-.navbar-right a.author-info:hover {
-	color: #ffffff;
-	text-decoration: none;
+/**********************/
+/** Customized Style **/
+/**********************/
+
+body {
+  padding-top: 50px;
+  height: 100%;
 }
-.navbar-right a.author-info:active {
-	color: #ffffff;
-	text-decoration: none;
+
+#main-container {
+	padding-top: 20px;
+    padding-bottom: 20px;
+    height: 100%;
 }
-.navbar-right a.author-info:focus {
-	color: #ffffff;
-	text-decoration: none;
+
+.full-height {
+	height: 100%;
+}
+
+.no-rt-pd {
+	padding-right: 0px;
+}
+
+#third-container, #forth-container {
+	width: 100%;
+	height: 50%;
+	margin-left: -5px;
+}
+
+#third-container {
+	padding-bottom: 10px;
+}
+
+.view-container {
+	height: 100%;
+	width: 100%;
+    box-shadow: 1px 1px 3px #999;
 }
 
 #map-container {
-	position: relative;
-	float: left;
-	width: 80%;
+	width: 100%;
 	height: 100%;
-	padding-left: 3px;
 }
 
 #map-canvas {
 	width: 100%;
 	height: 100%;
 }
-
-#action-window {
-	position: relative;
-	float: left;
-	width: 20%;
-	height: 100%;
-	box-shadow: 0px 0px 3px 2px #aaa;
-}
-
-#form-container {
-	padding: 20px 15px 20px 15px;
-	border-bottom: dotted 1px #ccc;
-}
-
-#form-container form {
-	margin-bottom: 0px;
-}
-
-.form-group input.form-control:hover {
-	border-color: #66afe9;
-}
-
-.btn-group {
-	width: 100%;
-}
-
-.btn-group button.btn {
-	width: 100%;
-	color: #333;
-	background: #eee;
-	box-shadow: inset 0px 0px 2px 0px #ccc;
-	border-color: #ccc;
-	transition: border-color ease-in-out .15s;
-}
-
-.btn-group button.btn:hover {
-	border-color: #66afe9;
-}
-
-#table-container {
-	padding: 20px 15px 20px 15px;
-	overflow-x: hidden;
-	overflow-y: scroll;
-}
-
-#table-container p {
-	display: block;
-}
-
-#traj-table td.color-rect {
-	display: flex;
-}
-
-#traj-table td.color-rect div {
-	width: 20px;
-	height: 20px;
-	border-radius: 3px;
-	box-shadow: 0px 0px 3px 0px #ccc;
-}
-
 
