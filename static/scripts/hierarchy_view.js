@@ -67,6 +67,12 @@ function draw_hierarchy_view(treeData) {
         return Math.log(+d.value + 1) / maxValue * 0.9 + 0.1;
     }
 
+    // sort the tree according to the node names
+    function sortTree() {
+        tree.sort(function(a, b) {
+            return b.name.toLowerCase() <= a.name.toLowerCase() ? 1 : -1;
+        });
+    }
     // Sort the tree initially incase the JSON isn't in a sorted order.
     sortTree();
 
@@ -309,9 +315,3 @@ function draw_hierarchy_view(treeData) {
     centerNode(root);
 }
 
-// sort the tree according to the node names
-function sortTree() {
-    tree.sort(function(a, b) {
-        return b.name.toLowerCase() <= a.name.toLowerCase() ? 1 : -1;
-    });
-}
