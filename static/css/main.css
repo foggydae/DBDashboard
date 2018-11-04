@@ -3,6 +3,7 @@
 /**********************/
 .container{
 	width: 100%;
+	max-width: 100%;
 	margin-left: 0px;
 	margin-right: 0px;
 }
@@ -25,6 +26,18 @@
 /**********************/
 /** Customized Style **/
 /**********************/
+
+#file-loader {
+    display: flex;
+    justify-content: center;
+    height: 80%;
+    align-items: center;
+}
+
+.submit-btn {
+	font-size: 13px;
+}
+
 
 body {
   padding-top: 50px;
@@ -49,6 +62,7 @@ body {
 	width: 100%;
 	height: 50%;
 	margin-left: -5px;
+	display: flex;
 }
 
 #third-container {

@@ -16,24 +16,19 @@
 	</head>
 
 	<body>
-		<nav class="navbar navbar-inverse navbar-fixed-top">
-			<div class="container">
-				<div class="navbar-header">
-					<a class="navbar-brand" href="#">D&B Dashboard</a>
-				</div>
-				<div id="navbar" class="collapse navbar-collapse">
-					<div class="navbar-form navbar-right">
-						<a class="author-info" href="#"></a>
-					</div>
-				</div>
-			</div>
+		<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+			<a class="navbar-brand mr-auto" href="#"><strong>D&B Dashboard</strong></a>
+			<nav class="my-2 my-md-0 mr-md-3">
+				<span id="dataset-tag" class="navbar-brand font-weight-light">Current Dataset: {{ filename }}</span>
+			</nav>
+			<button id="reset-button" class="btn btn-outline-light"><a href="/">Upload</a></button>
 		</nav>
 
 		<div id="main-container" class="container row">
 			<div class="col-sm-4 full-height">
 				<div id="hierarchy-container" class="view-container"></div>
 			</div>
-			<div class="col-sm-8 full-height no-rt-pd">
+			<div class="col-sm-8 full-height no-rt-pd container row">
 				<div id="third-container">
 					<div class="col-sm-3 full-height">
 						<div id="search-container" class="view-container">search view</div>

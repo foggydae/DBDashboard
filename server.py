@@ -1,24 +1,25 @@
-import csv
+from flask import Flask, request, render_template
 import json
-import re
-import math
-import time
-import datetime
-from flask import Flask
+from datetime import datetime
 
 app = Flask(__name__)
 
 
-@app.route("/")
+@app.route("/", methods=['GET'])
 def Index():
-	print('[LOG] init dashboard')
-	return app.send_static_file("index.html")
+	return render_template("upload.html")
 
 
-@app.route("/api/get_hierarchy_data", methods=["get"])
-# get stations' both basic info(name\ID\color\...)
-def get_hierarchy_data ():
-	print('[LOG] get hierarchy data request')
+@app.route("/api/load_file", methods=["POST", "GET"])
+def load_file():
+	if request.method == 'POST':
+		file = request.files["myfile"]
+		print(file)
+	return render_template("dashboard.html", filename=file.filename)
+
+
+@app.route("/api/get_hierarchy_data", methods=["GET"])
+def get_hierarchy_data():
 	try:
 		with open("./dataset/gen_data/parental_tree_wo_branches.json", "r") as f:
 			json_tree = f.read()
@@ -27,10 +28,10 @@ def get_hierarchy_data ():
 		return "NO_DATA"
 
 
-@app.route("/api/get_map_data/<message>", methods=["get"])
+@app.route("/api/get_map_data/<message>", methods=["GET"])
 def get_map_data(message):
-	print('[LOG] get map data request')
 	pass
+
 
 if __name__=="__main__":
 	app.run(debug=True)
