@@ -1,8 +1,10 @@
 from flask import Flask, request, render_template
+from Utils.EntityModel import EntityModel
 import json
 from datetime import datetime
 
 app = Flask(__name__)
+entity_model = EntityModel(verbose=False)
 
 
 @app.route("/", methods=['GET'])
@@ -14,16 +16,14 @@ def Index():
 def load_file():
 	if request.method == 'POST':
 		file = request.files["myfile"]
-		print(file)
+		entity_model.upload(file)
 	return render_template("dashboard.html", filename=file.filename)
 
 
 @app.route("/api/get_hierarchy_data", methods=["GET"])
 def get_hierarchy_data():
 	try:
-		with open("./dataset/gen_data/parental_tree_wo_branches.json", "r") as f:
-			json_tree = f.read()
-		return json_tree
+		return json.dumps(entity_model.get_json_tree(root_type="most", ignore_branches=False))
 	except:
 		return "NO_DATA"
 
