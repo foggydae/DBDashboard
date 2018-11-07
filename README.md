@@ -1,6 +1,6 @@
 # D&B Database Dashboard
 
-#### Current Progress: hahaha
+#### Current Progress:
 
 ![ScreenShot](./images/screenshot.png)
 
