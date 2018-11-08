@@ -13,6 +13,7 @@ class EntityModel():
 			('2','0'): "BRANCH",
 			('0','3'): "SINGLE_SUB"
 		}
+
 		self.FEATURE_INCLUDED = [
 			"CASE_DUNS", "CASE_NAME", "CASE_SECOND_NAME", 
 			"CASE_COUNTRY_NAME", "CASE_STATE_NAME", "CASE_CITY", 
@@ -20,6 +21,7 @@ class EntityModel():
 			"SALES_US", "EMPLOYEES_HERE", "EMPLOYEES_TOTAL",
 			"PARENT_DUNS", "DOMESTIC_DUNS", "GLOBAL_DUNS"
 		]
+
 		self.FEATURE_RENAME = {
 			"CASE_DUNS": "id",
 			"CASE_NAME": "name",
@@ -34,6 +36,7 @@ class EntityModel():
 			"EMPLOYEES_HERE": "size",
 			"EMPLOYEES_TOTAL": "sizeHere"
 		}
+
 		self.verbose = verbose
 
 

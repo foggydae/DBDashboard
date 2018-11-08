@@ -85,6 +85,25 @@ body {
 	height: 100%;
 }
 
+.detail-info {
+	padding-left: 5px;
+	padding-right: 5px;
+    max-width: 250px;
+    margin-top: 5px;
+    margin-left: 5px;
+    position: absolute;
+    background-color: #fff;
+    opacity: 0.8;
+    box-shadow: 1px 1px 3px #ccc;
+    font-size: 12px;
+    display: none;
+}
+
+.info-header {
+	font-weight: 900;
+	width: 20px;
+}
+
 /**********************/
 /*** Hierarchy View ***/
 /**********************/

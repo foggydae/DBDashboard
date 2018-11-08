@@ -23,7 +23,7 @@ def load_file():
 @app.route("/api/get_hierarchy_data", methods=["GET"])
 def get_hierarchy_data():
 	try:
-		return json.dumps(entity_model.get_json_tree(root_type="most", ignore_branches=False))
+		return json.dumps(entity_model.get_json_tree(root_type="most", ignore_branches=True))
 	except:
 		return "NO_DATA"
 

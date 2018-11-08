@@ -19,14 +19,23 @@
 		<nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
 			<a class="navbar-brand mr-auto" href="#"><strong>D&B Dashboard</strong></a>
 			<nav class="my-2 my-md-0 mr-md-3">
-				<span id="dataset-tag" class="navbar-brand font-weight-light">Current Dataset: {{ filename }}</span>
+				<span id="dataset-tag" class="navbar-brand font-weight-light">Current Dataset: {{filename}}</span>
 			</nav>
 			<a href="/"><button id="reset-button" class="btn btn-outline-light">Upload</button></a>
 		</nav>
 
 		<div id="main-container" class="container row">
 			<div class="col-sm-4 full-height">
-				<div id="hierarchy-container" class="view-container"></div>
+				<div id="hierarchy-container" class="view-container">
+					<div id="hierarchy-info" class="detail-info">
+						<div><span class="info-header">Name: </span>		<span id="hierarchy-info-name"></span></div>
+						<div><span class="info-header">Location: </span>	<span id="hierarchy-info-location"></span></div>
+						<div><span class="info-header">Address:</span>		<span id="hierarchy-info-address"></span></div>
+						<div><span class="info-header">SIC:</span>			<span id="hierarchy-info-SIC"></span></div>
+						<div><span class="info-header">LastUpdate:</span>	<span id="hierarchy-info-lastUpdate"></span></div>
+						<div><span class="info-header">Completeness:</span>	<span id="hierarchy-info-completeness"></span></div>
+					</div>
+				</div>
 			</div>
 			<div class="col-sm-8 full-height no-rt-pd container row">
 				<div id="third-container">

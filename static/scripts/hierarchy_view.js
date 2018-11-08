@@ -57,14 +57,14 @@ function draw_hierarchy_view(treeData) {
     visit(treeData, function(d) {
         totalNodes++;
         maxLabelLength = Math.max(d.name.length, maxLabelLength);
-        maxValue = Math.max(Math.log(+d.value + 1), maxValue);
+        maxValue = Math.max(Math.log(+d.revenue + 1), maxValue);
 
     }, function(d) {
         return d.children && d.children.length > 0 ? d.children : null;
     });
 
     function getOpacity(d) {
-        return Math.log(+d.value + 1) / maxValue * 0.9 + 0.1;
+        return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
     }
 
     // sort the tree according to the node names
@@ -91,13 +91,26 @@ function draw_hierarchy_view(treeData) {
         .attr("class", "overlay")
         .call(zoomListener);
 
-    // Helper functions for collapsing and expanding nodes.
-    function collapse(d) {
-        if (d.children) {
-            d._children = d.children;
-            d._children.forEach(collapse);
-            d.children = null;
-        }
+
+    function mouseover(d) {
+        $("#hierarchy-info-name").html(d.name);
+        $("#hierarchy-info-location").html(d.city + ", " + d.state + ", " + d.country);
+        $("#hierarchy-info-address").html(d.city);
+        $("#hierarchy-info-SIC").html(d.type);
+        $("#hierarchy-info-lastUpdate").html(d.type);
+        $("#hierarchy-info").css("display", "unset");
+    }
+
+    function mouseout(d) {
+
+    }
+
+    // Toggle children on click.
+    function click(d) {
+        if (d3.event.defaultPrevented) return; // click suppressed
+        d = toggleChildren(d);
+        update(d);
+        centerNode(d);
     }
 
     // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
@@ -124,14 +137,6 @@ function draw_hierarchy_view(treeData) {
             d._children = null;
         }
         return d;
-    }
-
-    // Toggle children on click.
-    function click(d) {
-        if (d3.event.defaultPrevented) return; // click suppressed
-        d = toggleChildren(d);
-        update(d);
-        centerNode(d);
     }
 
     function update(source) {
@@ -178,8 +183,7 @@ function draw_hierarchy_view(treeData) {
             .attr("class", "node")
             .attr("transform", function(d) {
                 return "translate(" + source.y0 + "," + source.x0 + ")";
-            })
-            .on('click', click);
+            });
 
         nodeEnter.append("circle")
             .attr('class', 'nodeCircle')
@@ -190,7 +194,10 @@ function draw_hierarchy_view(treeData) {
             .style("fill", function(d) {
                 return d._children ? "orange" : d.type == "3" ? "steelblue" : "darkseagreen";
             })
-            .style("fill-opacity", getOpacity);
+            .style("fill-opacity", getOpacity)
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout)
+            .on('click', click);            
 
         nodeEnter.append("text")
             .attr("x", function(d) {
