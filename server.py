@@ -9,29 +9,29 @@ entity_model = EntityModel(verbose=False)
 
 @app.route("/", methods=['GET'])
 def Index():
-	return render_template("upload.html")
+    return render_template("upload.html")
 
 
 @app.route("/api/load_file", methods=["POST", "GET"])
 def load_file():
-	if request.method == 'POST':
-		file = request.files["myfile"]
-		entity_model.upload(file)
-	return render_template("dashboard.html", filename=file.filename)
+    if request.method == 'POST':
+        file = request.files["myfile"]
+        entity_model.upload(file)
+    return render_template("dashboard.html", filename=file.filename)
 
 
 @app.route("/api/get_hierarchy_data", methods=["GET"])
 def get_hierarchy_data():
-	try:
-		return json.dumps(entity_model.get_json_tree(root_type="most", ignore_branches=False))
-	except:
-		return "NO_DATA"
+    try:
+        return json.dumps(entity_model.get_json_tree(root_type="most", ignore_branches=False))
+    except:
+        return "NO_DATA"
 
 
 @app.route("/api/get_map_data/<message>", methods=["GET"])
 def get_map_data(message):
-	pass
+    pass
 
 
-if __name__=="__main__":
-	app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
