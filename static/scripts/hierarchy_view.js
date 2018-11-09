@@ -96,9 +96,10 @@ function draw_hierarchy_view(treeData) {
         $("#hierarchy-info-name").html(d.name);
         $("#hierarchy-info-location").html(d.location);
         $("#hierarchy-info-address").html(d.address);
-        $("#hierarchy-info-SIC").html(d.SIC1);
+        $("#hierarchy-info-SIC").html(d.SIC);
         $("#hierarchy-info-lastUpdate").html(d.lastUpdate);
         $("#hierarchy-info-completeness").html(d.Completeness);
+        $("#hierarchy-info-hierarchy").html(d.level);
         $("#hierarchy-info").css("display", "unset");
     }
 
@@ -116,6 +117,8 @@ function draw_hierarchy_view(treeData) {
 
     function click_name(d) {
         console.log("click on " + d.name);
+        $(".selectedText").removeClass('selectedText');
+        $(this).addClass('selectedText');
     }
 
     // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
@@ -145,7 +148,7 @@ function draw_hierarchy_view(treeData) {
     }
 
     function hide_virtual_node(d) {
-        if (d.id.startsWith("Virtual")) {
+        if (d.PARENT_DUNS.startsWith("Virtual")) {
             return "none";
         }
         return "unset";
@@ -153,7 +156,7 @@ function draw_hierarchy_view(treeData) {
 
     function hide_virtual_link(d) {
         console.log(d);
-        if (d.source.id.startsWith("Virtual") || d.target.id.startsWith("Virtual")) {
+        if (d.source.PARENT_DUNS.startsWith("Virtual") || d.target.PARENT_DUNS.startsWith("Virtual")) {
             return "none";
         }
         return "unset";
@@ -176,7 +179,7 @@ function draw_hierarchy_view(treeData) {
             }
         };
         childCount(0, root);
-        var newHeight = d3.max(levelWidth) * 25; // 25 pixels per line  
+        var newHeight = d3.max(levelWidth) * 35; // 25 pixels per line  
         tree = tree.size([newHeight, viewerWidth]);
 
         // Compute the new tree layout.
