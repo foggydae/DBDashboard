@@ -47,6 +47,8 @@ class EntityModel():
         company_df.fillna("", inplace=True)
         self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
         self.no_domestic_parent = 0
+        self.max_level = 0
+        self.virtual_entity_dict = self._create_virtual_entities()  # modified by _create_virtual_entities
         self.global_ultimates, self.roots, self.entity_dict = self._get_entity_dict(company_df)
         self.prev_to_now_dict = self._get_prev_to_now_dict(company_df)
         self.json_tree = self.get_json_tree()
@@ -102,16 +104,33 @@ class EntityModel():
             if row["CASE_DUNS"] == row["PARENT_DUNS"]:
                 roots.add(row["CASE_DUNS"])
 
-            # add an virtual root
-            entity_dict['Virtual_Root'] = {}
-            for feature in self.FEATURE_INCLUDED:
-                entity_dict['Virtual_Root'][feature] = ''
-            entity_dict['Virtual_Root']["CASE_DUNS"] = "Virtual_Root"
-            entity_dict['Virtual_Root']["CASE_NAME"] = "Virtual_Root"
-            entity_dict['Virtual_Root']["PARENT_DUNS"] = "Virtual_Root"
-
+            # track max level of the dataset in self.max_level
+            self.max_level = max(self.max_level, int(row['GLOBAL_HIERARCHY_CODE']))
 
         return global_ultimates, list(roots), entity_dict
+
+    def _create_virtual_entities(self):
+        virtual_entity_dict = {}
+        # add an virtual root
+        virtual_entity_dict['Virtual_Root'] = {}
+        for feature in self.FEATURE_INCLUDED:
+            virtual_entity_dict['Virtual_Root'][feature] = ''
+        virtual_entity_dict['Virtual_Root']["CASE_DUNS"] = "Virtual_Root"
+        virtual_entity_dict['Virtual_Root']["CASE_NAME"] = "Virtual_Root"
+        virtual_entity_dict['Virtual_Root']["PARENT_DUNS"] = "Virtual_Root"
+
+        # create virtual nodes
+        for i in range(1, self.max_level):
+            v_node = "Virtual_Node_Level_" + str(i)
+            v_node_parent = "Virtual_Node_Level_" + str(i - 1) if i > 1 else "Virtual_Root"
+            virtual_entity_dict[v_node] = {}
+            for feature in self.FEATURE_INCLUDED:
+                virtual_entity_dict[v_node][feature] = ''
+            virtual_entity_dict[v_node]["CASE_DUNS"] = v_node
+            virtual_entity_dict[v_node]["CASE_NAME"] = v_node
+            virtual_entity_dict[v_node]["PARENT_DUNS"] = v_node_parent
+        return virtual_entity_dict
+
 
     def _get_parental_hierarchy(self, ignore_branches=True):
         """
@@ -132,10 +151,7 @@ class EntityModel():
             cur_entity = row["CASE_DUNS"]
             cur_parent = row["PARENT_DUNS"]
             cur_domestic = row["DOMESTIC_DUNS"]
-
-            # skip Virtural_Root
-            if cur_entity == 'Virtual_Root':
-                continue
+            cur_level = int(row["GLOBAL_HIERARCHY_CODE"])
 
             # check and count branches
             if row["GLOBAL_STATUS_CODE"] == "2" and row["SUBSIDIARY_CODE"] == "0":
@@ -166,20 +182,35 @@ class EntityModel():
                         print("[WARNING]", self.entity_dict[cur_entity]["CASE_NAME"],
                               "'s parent (", cur_parent, ") is not in the database.")
                     # check domestic as parent
-                    if cur_domestic in self.entity_dict:
-                        if cur_domestic != cur_entity:
-                            if self.verbose:
-                                print("Domestic in the database:",
-                                      self.entity_dict[cur_domestic]["CASE_NAME"])
-                            # use domestic parent as parent
-                            family_dict[cur_entity]["parent"] = cur_domestic
-                            family_dict[cur_domestic]["children"].add(cur_entity)
-                        else:
-                            if self.verbose:
-                                print("Domestic in the database, but it is the entity itself")
-                    else:  # domestic parent not in dataset
+                    if cur_domestic in self.entity_dict and cur_domestic != cur_entity:
+                        # if cur_domestic != cur_entity:
+                        if self.verbose:
+                            print("Domestic in the database:",
+                                  self.entity_dict[cur_domestic]["CASE_NAME"])
+                        # use domestic parent as parent
+                        family_dict[cur_entity]["parent"] = cur_domestic
+                        family_dict[cur_domestic]["children"].add(cur_entity)
+                        # else:
+                        #     if self.verbose:
+                        #         print("Domestic in the database, but it is the entity itself")
+
+                    # domestic parent not in dataset or domestic parent is itself
+                    else:
                         self.no_domestic_parent += 1
-                        pass
+                        if cur_parent not in self.virtual_entity_dict:
+                            # create a virtual node as its parent
+                            self.virtual_entity_dict[cur_parent] = {}
+                            for feature in self.FEATURE_INCLUDED:
+                                self.virtual_entity_dict[cur_parent][feature] = ''
+                            self.virtual_entity_dict[cur_parent]["CASE_DUNS"] = cur_parent
+                            self.virtual_entity_dict[cur_parent]["CASE_NAME"] = "Virtual Node: " + cur_parent
+                            self.virtual_entity_dict[cur_parent]["PARENT_DUNS"] = \
+                                "Virtual_Node_Level_" + str(cur_level - 1) if cur_level > 1 else "Virtual_Root"
+
+                        # add parent relation with the virtual node
+                        family_dict[cur_entity]["parent"] = cur_parent
+                        family_dict[cur_parent]["children"].add(cur_entity)
+
                     # currently, no matter whether domestic can be used as parent or not, label this node as "parent-not-in-dataset entity"
                     no_parent_set.add(cur_entity)
                     family_dict[cur_entity]["parent"] = cur_parent
@@ -205,7 +236,10 @@ class EntityModel():
             new_feature_name = feature
             if feature in self.FEATURE_RENAME:
                 new_feature_name = self.FEATURE_RENAME[feature]
-            json_tree[new_feature_name] = self.entity_dict[node][feature].title()
+            try:
+                json_tree[new_feature_name] = self.entity_dict[node][feature].title()
+            except KeyError as e:
+                json_tree[new_feature_name] = self.virtual_entity_dict[node][feature].title()
         if len(tree_dict[node]["children"]) != 0:
             json_tree["children"] = []
             for entity in tree_dict[node]["children"]:
