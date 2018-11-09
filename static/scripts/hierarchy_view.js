@@ -94,10 +94,11 @@ function draw_hierarchy_view(treeData) {
 
     function mouseover(d) {
         $("#hierarchy-info-name").html(d.name);
-        $("#hierarchy-info-location").html(d.city + ", " + d.state + ", " + d.country);
-        $("#hierarchy-info-address").html(d.city);
-        $("#hierarchy-info-SIC").html(d.type);
-        $("#hierarchy-info-lastUpdate").html(d.type);
+        $("#hierarchy-info-location").html(d.location);
+        $("#hierarchy-info-address").html(d.address);
+        $("#hierarchy-info-SIC").html(d.SIC1);
+        $("#hierarchy-info-lastUpdate").html(d.lastUpdate);
+        $("#hierarchy-info-completeness").html(d.Completeness);
         $("#hierarchy-info").css("display", "unset");
     }
 
@@ -106,11 +107,15 @@ function draw_hierarchy_view(treeData) {
     }
 
     // Toggle children on click.
-    function click(d) {
+    function click_node(d) {
         if (d3.event.defaultPrevented) return; // click suppressed
         d = toggleChildren(d);
         update(d);
         centerNode(d);
+    }
+
+    function click_name(d) {
+        console.log("click on " + d.name);
     }
 
     // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
@@ -137,6 +142,21 @@ function draw_hierarchy_view(treeData) {
             d._children = null;
         }
         return d;
+    }
+
+    function hide_virtual_node(d) {
+        if (d.id.startsWith("Virtual")) {
+            return "none";
+        }
+        return "unset";
+    }
+
+    function hide_virtual_link(d) {
+        console.log(d);
+        if (d.source.id.startsWith("Virtual") || d.target.id.startsWith("Virtual")) {
+            return "none";
+        }
+        return "unset";
     }
 
     function update(source) {
@@ -183,7 +203,8 @@ function draw_hierarchy_view(treeData) {
             .attr("class", "node")
             .attr("transform", function(d) {
                 return "translate(" + source.y0 + "," + source.x0 + ")";
-            });
+            })
+            .style("display", hide_virtual_node);
 
         nodeEnter.append("circle")
             .attr('class', 'nodeCircle')
@@ -197,7 +218,7 @@ function draw_hierarchy_view(treeData) {
             .style("fill-opacity", getOpacity)
             .on("mouseover", mouseover)
             .on("mouseout", mouseout)
-            .on('click', click);            
+            .on('click', click_node);            
 
         nodeEnter.append("text")
             .attr("x", function(d) {
@@ -213,7 +234,10 @@ function draw_hierarchy_view(treeData) {
             .text(function(d) {
                 return d.name;
             })
-            .style("fill-opacity", 0);
+            .style("fill-opacity", 0)
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout)
+            .on("click", click_name);
 
         // Update the text to reflect whether node has children or not.
         node.select('text')
@@ -280,7 +304,8 @@ function draw_hierarchy_view(treeData) {
                     source: o,
                     target: o
                 });
-            });
+            })
+            .style("display", hide_virtual_link);
 
         // Transition links to their new position.
         link.transition()
@@ -319,6 +344,6 @@ function draw_hierarchy_view(treeData) {
 
     // Layout the tree initially and center on the root node.
     update(root);
-    centerNode(root);
+    centerNode(root["children"][0]);
 }
 
