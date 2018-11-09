@@ -27,7 +27,7 @@ class EntityModel():
             "CASE_DUNS": "id",
             "CASE_NAME": "name",
             "CASE_SECOND_NAME": "subName",
-            "CASE_ADDRESS1": "location",
+            "CASE_ADDRESS1": "address",
             "CASE_COUNTRY_NAME": "country",
             "CASE_STATE_NAME": "state",
             "CASE_CITY": "city",
@@ -48,8 +48,8 @@ class EntityModel():
         self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
         self.no_domestic_parent = 0
         self.max_level = 0
-        self.virtual_entity_dict = self._create_virtual_entities()  # modified by _create_virtual_entities
         self.global_ultimates, self.roots, self.entity_dict = self._get_entity_dict(company_df)
+        self.virtual_entity_dict = self._create_virtual_entities()  # modified by _create_virtual_entities
         self.prev_to_now_dict = self._get_prev_to_now_dict(company_df)
         self.json_tree = self.get_json_tree()
 
@@ -80,6 +80,8 @@ class EntityModel():
                 entity_dict[cur_id][feature] = row[feature]
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
             entity_dict[cur_id]['SIC'] = ', '.join([row["SIC1"], row["SIC2"], row["SIC3"], row["SIC4"], row["SIC5"], row["SIC6"]])
+            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
+
             # infer gps information
             # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
             # address2 = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
@@ -107,6 +109,7 @@ class EntityModel():
             # track max level of the dataset in self.max_level
             self.max_level = max(self.max_level, int(row['GLOBAL_HIERARCHY_CODE']))
 
+        self.FEATURE_INCLUDED.extend(['Completeness', 'SIC', 'location'])
         return global_ultimates, list(roots), entity_dict
 
     def _create_virtual_entities(self):
@@ -218,6 +221,19 @@ class EntityModel():
             else:
                 family_dict[cur_entity]["parent"] = cur_parent
                 family_dict[cur_parent]["children"].add(cur_entity)
+
+        for i, key in enumerate(self.virtual_entity_dict):
+            row = self.virtual_entity_dict[key]
+
+            cur_entity = row["CASE_DUNS"]
+            cur_parent = row["PARENT_DUNS"]
+
+            if cur_entity == "Virtual_Root":
+                continue
+
+            # link virtual nodes to it parents
+            family_dict[cur_entity]["parent"] = cur_parent
+            family_dict[cur_parent]["children"].add(cur_entity)
 
         for cur_id, cur_family in family_dict.items():
             family_dict[cur_id]["children"] = list(cur_family["children"])  # change from set to list
@@ -348,7 +364,7 @@ class EntityModel():
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Eaton"
+    company_name = "Ingersoll_Rand"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
