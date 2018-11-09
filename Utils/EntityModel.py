@@ -230,7 +230,7 @@ class EntityModel():
         entity_in_tree.add(node)
         return
 
-    def _extend_json_tree(self, tree_dict, node):
+    def _extend_json_tree(self, family_dict, node):
         json_tree = {}
         for feature in self.FEATURE_INCLUDED:
             new_feature_name = feature
@@ -240,10 +240,10 @@ class EntityModel():
                 json_tree[new_feature_name] = self.entity_dict[node][feature].title()
             except KeyError as e:
                 json_tree[new_feature_name] = self.virtual_entity_dict[node][feature].title()
-        if len(tree_dict[node]["children"]) != 0:
+        if len(family_dict[node]["children"]) != 0:
             json_tree["children"] = []
-            for entity in tree_dict[node]["children"]:
-                json_tree["children"].append(self._extend_json_tree(tree_dict, entity))
+            for entity in family_dict[node]["children"]:
+                json_tree["children"].append(self._extend_json_tree(family_dict, entity))
         return json_tree
 
     def _look_for_entity(self, root, entity_dun, result):
