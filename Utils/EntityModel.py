@@ -21,7 +21,7 @@ class EntityModel():
             "SIC1", "SIC2", "SIC3", "SIC4", "SIC5", "SIC6",
             "SALES_US", "EMPLOYEES_HERE", "EMPLOYEES_TOTAL", "LOB",
             "PARENT_DUNS", "DOMESTIC_DUNS", "GLOBAL_DUNS",
-            "FAMILY_UPDATE_DATE"
+            "REPORT_DATE"
         ]
         self.FEATURE_RENAME = {
             "CASE_DUNS": "id",
@@ -38,13 +38,15 @@ class EntityModel():
             "EMPLOYEES_HERE": "size",
             "EMPLOYEES_TOTAL": "sizeHere",
             "LOB": "LOB",
-            "FAMILY_UPDATE_DATE": "lastUpdate"
+            "REPORT_DATE": "lastUpdate"
         }
         self.verbose = verbose
 
     def upload(self, file):
         company_df = pd.read_csv(file, dtype=str)
         company_df.fillna("", inplace=True)
+        self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
+        self.no_domestic_parent = 0
         self.global_ultimates, self.roots, self.entity_dict = self._get_entity_dict(company_df)
         self.prev_to_now_dict = self._get_prev_to_now_dict(company_df)
         self.json_tree = self.get_json_tree()
@@ -99,6 +101,16 @@ class EntityModel():
             global_ultimates.add(row["GLOBAL_DUNS"])
             if row["CASE_DUNS"] == row["PARENT_DUNS"]:
                 roots.add(row["CASE_DUNS"])
+
+            # add an virtual root
+            entity_dict['Virtual_Root'] = {}
+            for feature in self.FEATURE_INCLUDED:
+                entity_dict['Virtual_Root'][feature] = ''
+            entity_dict['Virtual_Root']["CASE_DUNS"] = "Virtual_Root"
+            entity_dict['Virtual_Root']["CASE_NAME"] = "Virtual_Root"
+            entity_dict['Virtual_Root']["PARENT_DUNS"] = "Virtual_Root"
+
+
         return global_ultimates, list(roots), entity_dict
 
     def _get_parental_hierarchy(self, ignore_branches=True):
@@ -107,19 +119,23 @@ class EntityModel():
         :param ignore_branches:
         :return:
         family_dict: {DUNS_number: {'parent':'', 'children':[]}, ...}
-        no_parent_set,
-        branches_cnt
+        no_parent_set: set of children's DUNS
+        branches_cnt: count of branches (int)
         """
         family_dict = defaultdict(lambda: {"parent": "", "children": set()})
         no_parent_set = set()
         branches_cnt = 0
 
-        for key in self.entity_dict:
+        for i, key in enumerate(self.entity_dict):
             row = self.entity_dict[key]
 
             cur_entity = row["CASE_DUNS"]
             cur_parent = row["PARENT_DUNS"]
             cur_domestic = row["DOMESTIC_DUNS"]
+
+            # skip Virtural_Root
+            if cur_entity == 'Virtual_Root':
+                continue
 
             # check and count branches
             if row["GLOBAL_STATUS_CODE"] == "2" and row["SUBSIDIARY_CODE"] == "0":
@@ -132,7 +148,9 @@ class EntityModel():
             if (cur_parent == cur_entity):
                 if self.verbose:
                     print("[LOG] Root found:", self.entity_dict[cur_entity]["CASE_NAME"], ", ID =", cur_entity)
-                family_dict[cur_entity]["parent"] = "ROOT"
+                # family_dict[cur_entity]["parent"] = "ROOT"
+                family_dict[cur_entity]["parent"] = "Virtual_Root"
+                family_dict["Virtual_Root"]["children"].add(cur_entity)
             # parent not in dataset
             elif cur_parent not in self.entity_dict:
                 # check if the previous duns of parent in dataset
@@ -142,7 +160,7 @@ class EntityModel():
                     cur_parent = self.prev_to_now_dict[cur_parent]
                     family_dict[cur_entity]["parent"] = cur_parent
                     family_dict[cur_parent]["children"].add(cur_entity)
-                # cannot find parent. try domestic parent. **TODO** use domestic as parent
+                # cannot find parent. try domestic parent. **Implemented** use domestic as parent
                 else:
                     if self.verbose:
                         print("[WARNING]", self.entity_dict[cur_entity]["CASE_NAME"],
@@ -153,9 +171,15 @@ class EntityModel():
                             if self.verbose:
                                 print("Domestic in the database:",
                                       self.entity_dict[cur_domestic]["CASE_NAME"])
+                            # use domestic parent as parent
+                            family_dict[cur_entity]["parent"] = cur_domestic
+                            family_dict[cur_domestic]["children"].add(cur_entity)
                         else:
                             if self.verbose:
                                 print("Domestic in the database, but it is the entity itself")
+                    else:  # domestic parent not in dataset
+                        self.no_domestic_parent += 1
+                        pass
                     # currently, no matter whether domestic can be used as parent or not, label this node as "parent-not-in-dataset entity"
                     no_parent_set.add(cur_entity)
                     family_dict[cur_entity]["parent"] = cur_parent
@@ -165,7 +189,7 @@ class EntityModel():
                 family_dict[cur_parent]["children"].add(cur_entity)
 
         for cur_id, cur_family in family_dict.items():
-            family_dict[cur_id]["children"] = list(cur_family["children"])
+            family_dict[cur_id]["children"] = list(cur_family["children"])  # change from set to list
 
         return family_dict, no_parent_set, branches_cnt
 
@@ -238,15 +262,16 @@ class EntityModel():
             tree_size.append(len(entity_in_tree))
         return tree_size
 
-    def get_json_tree(self, root_type="most", ignore_branches=False):
+    def get_json_tree(self, ignore_branches=False):
         family_dict, no_parent_set, branches_cnt = \
             self._get_parental_hierarchy(ignore_branches=ignore_branches)
-        tree_size = self.stats_roots(family_dict)
-        if root_type == "most":
-            root = self.roots[np.argmax(tree_size)]
-        else:
-            root = self.roots[0]
-        json_tree = self._extend_json_tree(family_dict, root)
+        # tree_size = self.stats_roots(family_dict)
+        # if root_type == "most":
+        #     root = self.roots[np.argmax(tree_size)]
+        # else:
+        #     root = self.roots[0]
+
+        json_tree = self._extend_json_tree(family_dict, self.v_root)
         return json_tree
 
     def get_data_stats(self, ignore_branches=False):
@@ -294,3 +319,4 @@ if __name__ == '__main__':
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
     entity_model.get_data_stats(ignore_branches=False)
+    print('# of no Domestic Parent:', entity_model.no_domestic_parent)
