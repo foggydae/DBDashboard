@@ -74,36 +74,9 @@
 		<script type="text/javascript" src="/static/libs/leaflet.js"></script>
 		<script type="text/javascript" src="/static/libs/L.D3SvgOverlay.min.js"></script>
 
-		<!-- map layer -->
+		<script type="text/javascript" src="/static/scripts/config.js"></script>
 		<script type="text/javascript" src="/static/scripts/hierarchy_view.js"></script>
+		<script type="text/javascript" src="/static/scripts/index.js"></script>
 		<!-- <script type="text/javascript" src="/static/scripts/draw_station_layer.js"></script> -->
-		<!-- init map -->
-		<script type="text/javascript">
-
-		// GLOBAL VARIABLES
-		var latlng = {
-			United_State: [39.8283, -98.5795],
-		};
-		var zoom = {
-			United_State: 4,
-		};
-		var globalCurCity = "United_State";
-
-		// put map to map-canvas
-		var map = L.map("map-canvas").setView(latlng[globalCurCity], zoom[globalCurCity]);
-		var baseMapLayer_light = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-			attribution: ''
-		});
-		// another version of the map
-		var baseMapLayer_standard = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-			attribution: ''
-		});
-		// load the map
-		baseMapLayer_light.addTo(map);
-		// baseMapLayer_standard.addTo(map);
-
-		init_hierarchy_view();
-		
-		</script>
 	</body>
 </html>

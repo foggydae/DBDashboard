@@ -340,26 +340,22 @@ class EntityModel():
         print("Out-Tree Entity (Ultimately reports to one of the Missing Parents):", np.sum(no_parent_tree_size))
 
 
-
-    # def get_gps(self, case_duns='ALL'):
-    #     """
-    #     if case_duns is specified, return its gps and its children's and grand-children's gps
-    #     otherwise return all gps in the file
-    #
-    #     :return:
-    #     {case_duns: {"latitude": latitude, "longitude": longitude, “size”: employee_num, "revenue": revenue, ...}}
-    #     """
-    #
-    #     locations_dict = {}
-    #     if case_duns == 'ALL':
-    #         return self.json_tree
-    #     else:
-    #         tmp = set()
-    #         self._traverse_tree(self.family_dict, node=case_duns, entity_in_tree=tmp)
-    #
-    #
-    #     return locations_dict
-
+    def get_gps(self, case_duns='ALL'):
+        """
+        if case_duns is specified, return its gps and its children's and grand-children's gps
+        otherwise return all gps in the file
+    
+        :return:
+        {case_duns: {"latitude": latitude, "longitude": longitude, “size”: employee_num, "revenue": revenue, ...}}
+        """
+    
+        locations_dict = {}
+        if case_duns == 'ALL':
+            return self.entity_dict
+        else:
+            entities = set()
+            self._traverse_tree(self.family_dict, node=case_duns, entity_in_tree=entities)
+            return {entity: self.entity_dict[entity] for entity in entities}
 
 
 if __name__ == '__main__':
