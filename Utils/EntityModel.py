@@ -9,10 +9,10 @@ class EntityModel():
 
     def __init__(self, verbose=True):
         self.HIERARCHY_DICT = {
-            ('1', '0'): "G-ULTIMATE",
-            ('1', '3'): "SUBSIDIARY",
-            ('2', '0'): "BRANCH",
-            ('0', '3'): "SINGLE_SUB"
+            ('1', '0'): "root",
+            ('1', '3'): "subsidiary",
+            ('2', '0'): "branch",
+            ('0', '3'): "subsidiary"
         }
         self.FEATURE_INCLUDED = [
             "CASE_DUNS", "CASE_NAME", "CASE_SECOND_NAME",
@@ -21,7 +21,7 @@ class EntityModel():
             "SIC1", "SIC2", "SIC3", "SIC4", "SIC5", "SIC6",
             "SALES_US", "EMPLOYEES_HERE", "EMPLOYEES_TOTAL", "LOB",
             "PARENT_DUNS", "DOMESTIC_DUNS", "GLOBAL_DUNS",
-            "REPORT_DATE"
+            "REPORT_DATE", "latitude", "longitude"
         ]
         self.FEATURE_RENAME = {
             "CASE_DUNS": "id",
@@ -72,7 +72,7 @@ class EntityModel():
         global_ultimates = set()
         roots = set()
         entity_dict = {}
-        geolocator = DataBC()
+        # geolocator = DataBC()
         for i, row in company_df.iterrows():
             cur_id = row["CASE_DUNS"]
             entity_dict[cur_id] = {}
@@ -81,6 +81,12 @@ class EntityModel():
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
             entity_dict[cur_id]['SIC'] = ', '.join([row["SIC1"], row["SIC2"], row["SIC3"], row["SIC4"], row["SIC5"], row["SIC6"]])
             entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
+
+            entity_dict[cur_id]['size'] = row["EMPLOYEES_HERE"]
+            entity_dict[cur_id]['revenue'] = row["SALES_US"]
+            entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
+            entity_dict[cur_id]['name'] = row["CASE_NAME"]
+            entity_dict[cur_id]['lastUpdate'] = row["REPORT_DATE"]
 
             # infer gps information
             # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']

@@ -41,8 +41,7 @@ var load_hierarchy_view = function (ignore_branches=true) {
     $.get("/api/get_hierarchy_data/" + message, function (rtnString) {
         if (rtnString == "NO_DATA") {
             console.log("Error", "Failed in hierarchy data.");
-        }
-        else {
+        } else {
             var treeData = JSON.parse(rtnString);
             console.log(treeData);
         
@@ -64,7 +63,6 @@ var load_hierarchy_view = function (ignore_branches=true) {
             center_node(root["children"][0]);
         }
     });
-
 }
 
 var update_hierarchy_view = function (source) {
@@ -278,6 +276,7 @@ var _visit = function (parent, visitFn, childrenFn) {
 }
 
 var _getOpacity = function (d) {
+
     return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
 }
 
@@ -317,9 +316,10 @@ var _toggleChildren = function (d) {
 }
 
 var _click_name = function (d) {
-    console.log("click on " + d.name);
+    console.log("click on " + d.name + ", " + d.id);
     $(".selectedText").removeClass('selectedText');
     $(this).addClass('selectedText');
+    update_map_view(d.id);
 }
 
 var _hide_virtual_node = function (d) {

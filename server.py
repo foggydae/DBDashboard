@@ -34,7 +34,7 @@ def get_hierarchy_data(message):
 @app.route("/api/get_map_data/<message>", methods=["GET"])
 def get_map_data(message):
     message_dict = json.loads(message)
-    duns = message_dict['id']
+    duns = message_dict['select_entity']
     try:
         return json.dumps(entity_model.get_gps(duns))
     except:

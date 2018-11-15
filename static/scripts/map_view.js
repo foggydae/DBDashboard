@@ -1,28 +1,136 @@
+var map;
+var marker_dict;
+var entities, branches, controller, baseMaps;
 
 var init_map_view = function () {
-	// global variables for hierarchy view
-	var latlng = {
-		United_State: [39.8283, -98.5795],
+	var baseMapLayer_light = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+		id: "light",
+		attribution: ""
+	});
+	var baseMapLayer_standard = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		id: "standard",
+		attribution: ""
+	});
+	baseMaps = {
+	    "light": baseMapLayer_light,
+	    "standard": baseMapLayer_standard
 	};
-	var zoom = {
-		United_State: 4,
-	};
-	var globalCurCity = "United_State";
 
 	// put map to map-canvas
-	var map = L.map("map-canvas").setView(latlng[globalCurCity], zoom[globalCurCity]);
-	var baseMapLayer_light = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-		attribution: ''
-	});
-	// another version of the map
-	var baseMapLayer_standard = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-		attribution: ''
-	});
+	map = L.map("map-canvas").setView([39.8283, -98.5795], 4);
 	// load the map
 	baseMapLayer_light.addTo(map);
-	// baseMapLayer_standard.addTo(map);	
+
+	// init map with data
+	var message = JSON.stringify({
+		select_entity: "ALL"
+	});
+	$.get("/api/get_map_data/" + message, function (rtn_string) {
+		if (rtn_string == "NO_DATA") {
+			console.log("Error", "Failed in map data.");
+		} else {
+			var map_data = JSON.parse(rtn_string);
+			console.log(map_data);
+			init_marker_dict(map_data);
+			var new_layers = get_entity_group(map_data);
+			entities = new_layers[0];
+			branches = new_layers[1];
+			entities.addTo(map);
+			branches.addTo(map);
+
+			var overlayMaps = {
+			    "entities": entities,
+			    "branches": branches
+			};
+			controller = L.control.layers(baseMaps, overlayMaps);
+			controller.addTo(map);
+		}
+	});
 }
 
-var draw_map_view = function () {
-	
+var init_marker_dict = function (map_data) {
+	marker_dict = {};
+	for (var key in map_data) {
+		marker_dict[key] = L.circleMarker(
+				[
+					+map_data[key]["latitude"], 
+					+map_data[key]["longitude"]
+				], 
+				{
+					weight: 1,
+					fill: true,
+					radius: _get_radius(map_data[key]["size"]),
+					color: _get_colors(map_data[key]["type"]),
+					fillColor: _get_colors(map_data[key]["type"]),
+					fillOpacity: _get_opacity(map_data[key]["revenue"])
+				}
+			)
+			.bindPopup(
+				"<span class='info-header'>Name: </span><span>" + map_data[key]["name"] + "</span>"
+			)
+			.on("mouseover", function(d) {
+				this.openPopup();
+			})
+			.on("mouseout", function(d) {
+				this.closePopup();
+			});
+	}
+}
+
+var get_entity_group = function (map_data) {
+	var new_entities = L.layerGroup(), 
+		new_branches = L.layerGroup();
+	for (var key in map_data) {
+		if (map_data[key]["type"] == "branch") {
+			new_branches.addLayer(marker_dict[key]);
+		} else {
+			new_entities.addLayer(marker_dict[key]);
+		}
+	}
+	return [new_entities, new_branches];
+}
+
+var update_map_view = function (duns) {
+	// init map with data
+	var message = JSON.stringify({
+		select_entity: duns
+	});
+	console.log("/api/get_map_data/" + message);
+	$.get("/api/get_map_data/" + message, function (rtn_string) {
+		if (rtn_string == "NO_DATA") {
+			console.log("Error", "Failed in map data.");
+		} else {
+			var map_data = JSON.parse(rtn_string);
+			console.log(map_data);
+			var new_layers = get_entity_group(map_data);
+			entities.remove();
+			branches.remove();
+			controller.remove();
+
+			entities = new_layers[0];
+			branches = new_layers[1];
+			entities.addTo(map);
+			branches.addTo(map);
+
+			var overlayMaps = {
+			    "entities": entities,
+			    "branches": branches
+			};
+			controller = L.control.layers(baseMaps, overlayMaps);
+			controller.addTo(map);
+		}
+	});
+
+}
+
+var _get_colors = function (type) {
+	return "#ff9944";
+}
+
+var _get_radius = function (size) {
+	return 5;
+}
+
+var _get_opacity = function (revenue) {
+	return 0.5;
 }
