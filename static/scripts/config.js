@@ -10,10 +10,10 @@ var HIERARCHY_SHOW_VIRTUAL_NODE = false;
 
 // default colors
 var NODE_COLOR = {
-	"virtual": "#d3d3d3", 	// lightgray
-	"root": "#926757",		// brown
-	"branch": "#8fbc8f",	// steelblue
-	"subsidiary": "#8a6356"		// darkgreen
+	"Virtual": "#d3d3d3", 	// lightgray
+	"Root": "#926757",		// brown
+	"Branch": "#8fbc8f",	// steelblue
+	"Subsidiary": "#8a6356"		// darkgreen
 }
 
 

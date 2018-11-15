@@ -338,7 +338,6 @@ class EntityModel():
               "(Missing Parents: " + str(len(missing_parents)) + ")")
         print("Out-Tree Entity (Ultimately reports to one of the Missing Parents):", np.sum(no_parent_tree_size))
 
-
     def get_gps(self, case_duns='ALL'):
         """
         if case_duns is specified, return its gps and its children's and grand-children's gps

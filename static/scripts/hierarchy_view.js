@@ -284,6 +284,7 @@ var _get_node_opacity = function (d) {
 
 var _get_node_color = function (d) {
     console.log(d.type);
+    console.log(NODE_COLOR[d.type]);
     return NODE_COLOR[d.type];
 }
 
