@@ -78,15 +78,17 @@ class EntityModel():
             entity_dict[cur_id] = {}
             for feature in self.FEATURE_INCLUDED:
                 entity_dict[cur_id][feature] = row[feature]
-            entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
-            entity_dict[cur_id]['SIC'] = ', '.join([row["SIC1"], row["SIC2"], row["SIC3"], row["SIC4"], row["SIC5"], row["SIC6"]])
-            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
 
+            entity_dict[cur_id]['id'] = cur_id
+            entity_dict[cur_id]['name'] = row["CASE_NAME"]
             entity_dict[cur_id]['size'] = row["EMPLOYEES_HERE"]
             entity_dict[cur_id]['revenue'] = row["SALES_US"]
             entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
-            entity_dict[cur_id]['name'] = row["CASE_NAME"]
             entity_dict[cur_id]['lastUpdate'] = row["REPORT_DATE"]
+
+            entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
+            entity_dict[cur_id]['SIC'] = ', '.join([row["SIC1"], row["SIC2"], row["SIC3"], row["SIC4"], row["SIC5"], row["SIC6"]])
+            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
 
             # infer gps information
             # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']

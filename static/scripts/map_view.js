@@ -30,7 +30,6 @@ var init_map_view = function () {
 			console.log("Error", "Failed in map data.");
 		} else {
 			var map_data = JSON.parse(rtn_string);
-			console.log(map_data);
 			init_marker_dict(map_data);
 			var new_layers = get_entity_group(map_data);
 			entities = new_layers[0];
@@ -57,6 +56,7 @@ var init_marker_dict = function (map_data) {
 					+map_data[key]["longitude"]
 				], 
 				{
+					id: key,
 					weight: 1,
 					fill: true,
 					radius: _get_radius(map_data[key]["size"]),
@@ -73,6 +73,9 @@ var init_marker_dict = function (map_data) {
 			})
 			.on("mouseout", function(d) {
 				this.closePopup();
+			})
+			.on("click", function(d) {
+				center_node(d.target.options.id);
 			});
 	}
 }
@@ -95,13 +98,11 @@ var update_map_view = function (duns) {
 	var message = JSON.stringify({
 		select_entity: duns
 	});
-	console.log("/api/get_map_data/" + message);
 	$.get("/api/get_map_data/" + message, function (rtn_string) {
 		if (rtn_string == "NO_DATA") {
 			console.log("Error", "Failed in map data.");
 		} else {
 			var map_data = JSON.parse(rtn_string);
-			console.log(map_data);
 			var new_layers = get_entity_group(map_data);
 			entities.remove();
 			branches.remove();

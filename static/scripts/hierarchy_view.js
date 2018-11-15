@@ -1,7 +1,7 @@
 /* implemented based on Rob Schmuecker's DNDTree Demo */
 
 // global variables for hierarchy view
-var maxLabelLength, maxValue, duration, root;
+var maxLabelLength, maxValue, duration, root, idNodeDict;
 var diagonal, treeLayout;
 var zoomListener, baseSvg, svgGroup;
 
@@ -9,6 +9,7 @@ var init_hierarchy_view = function () {
     maxLabelLength = 0; 
     maxValue = 0;
     duration = 750;
+    idNodeDict = {};
 
     // define a d3 diagonal projection for use by the node paths later on.
     diagonal = d3.svg.diagonal()
@@ -44,16 +45,9 @@ var load_hierarchy_view = function (ignore_branches=true) {
         } else {
             var treeData = JSON.parse(rtnString);
             console.log(treeData);
-        
+
             // Call _visit function to establish maxLabelLength
-            _visit(treeData, 
-                function(d) {
-                    maxLabelLength = Math.max(d.name.length, maxLabelLength);
-                    maxValue = Math.max(Math.log(+d.revenue + 1), maxValue);
-                }, 
-                function(d) {
-                    return d.children && d.children.length > 0 ? d.children : null;
-                });
+            _visit(treeData);
 
             // Define the root
             root = treeData;
@@ -66,6 +60,10 @@ var load_hierarchy_view = function (ignore_branches=true) {
 }
 
 var update_hierarchy_view = function (source) {
+
+    if (typeof source == "string") {
+        source = idNodeDict[source];
+    }
 
     // size of the diagram
     var viewerWidth = $("#hierarchy-container").width();
@@ -250,10 +248,13 @@ var update_hierarchy_view = function (source) {
 
 // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
 var center_node = function (source) {
+    if (typeof source == "string") {
+        source = idNodeDict[source];
+    }
     scale = zoomListener.scale();
     x = -source.y0;
     y = -source.x0;
-    x = x * scale + 10;
+    x = x * scale + baseSvg.attr("width") / 2;
     y = y * scale + baseSvg.attr("height") / 2;
     d3.select('g').transition()
         .duration(duration)
@@ -263,14 +264,18 @@ var center_node = function (source) {
 }
 
 // A recursive helper function for performing some setup by walking through all nodes
-var _visit = function (parent, visitFn, childrenFn) {
-    if (!parent) return;
-    visitFn(parent);
-    var children = childrenFn(parent);
+var _visit = function (node) {
+    if (!node) return;
+
+    maxLabelLength = Math.max(node.name.length, maxLabelLength);
+    maxValue = Math.max(Math.log(+node.revenue + 1), maxValue);
+    idNodeDict[node.id] = node;
+
+    var children = node.children && node.children.length > 0 ? node.children : null;
     if (children) {
         var count = children.length;
         for (var i = 0; i < count; i++) {
-            _visit(children[i], visitFn, childrenFn);
+            _visit(children[i]);
         }
     }
 }
@@ -316,7 +321,6 @@ var _toggleChildren = function (d) {
 }
 
 var _click_name = function (d) {
-    console.log("click on " + d.name + ", " + d.id);
     $(".selectedText").removeClass('selectedText');
     $(this).addClass('selectedText');
     update_map_view(d.id);
@@ -335,5 +339,3 @@ var _hide_virtual_link = function (d) {
     }
     return "unset";
 }
-
-
