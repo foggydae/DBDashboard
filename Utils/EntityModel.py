@@ -14,45 +14,33 @@ class EntityModel():
             ('2', '0'): "branch",
             ('0', '3'): "subsidiary"
         }
-        self.FEATURE_INCLUDED = [
-            "CASE_DUNS", "CASE_NAME", "CASE_SECOND_NAME",
-            "CASE_ADDRESS1", "CASE_COUNTRY_NAME", "CASE_STATE_NAME", "CASE_CITY",
-            "GLOBAL_STATUS_CODE", "SUBSIDIARY_CODE", "GLOBAL_HIERARCHY_CODE",
-            "SIC1", "SIC2", "SIC3", "SIC4", "SIC5", "SIC6",
-            "SALES_US", "EMPLOYEES_HERE", "EMPLOYEES_TOTAL", "LOB",
-            "PARENT_DUNS", "DOMESTIC_DUNS", "GLOBAL_DUNS",
-            "REPORT_DATE", "latitude", "longitude"
-        ]
-        self.FEATURE_RENAME = {
-            "CASE_DUNS": "id",
-            "CASE_NAME": "name",
-            "CASE_SECOND_NAME": "subName",
-            "CASE_ADDRESS1": "address",
-            "CASE_COUNTRY_NAME": "country",
-            "CASE_STATE_NAME": "state",
-            "CASE_CITY": "city",
-            "GLOBAL_STATUS_CODE": "status",
-            "SUBSIDIARY_CODE": "type",
-            "GLOBAL_HIERARCHY_CODE": "level",
-            "SALES_US": "revenue",
-            "EMPLOYEES_HERE": "size",
-            "EMPLOYEES_TOTAL": "sizeHere",
-            "LOB": "LOB",
-            "REPORT_DATE": "lastUpdate"
-        }
+        # self.FEATURE_RENAME = {
+        #     "CASE_DUNS": "id",
+        #     "CASE_NAME": "name",
+        #     "CASE_SECOND_NAME": "subName",
+        #     "CASE_ADDRESS1": "address",
+        #     "CASE_COUNTRY_NAME": "country",
+        #     "CASE_STATE_NAME": "state",
+        #     "CASE_CITY": "city",
+        #     "GLOBAL_STATUS_CODE": "status",
+        #     "SUBSIDIARY_CODE": "type",
+        #     "GLOBAL_HIERARCHY_CODE": "level",
+        #     "LOB": "LOB",
+        # }
         self.verbose = verbose
+        self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
 
     def upload(self, file):
         company_df = pd.read_csv(file, dtype=str)
         company_df.fillna("", inplace=True)
-        self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
-        self.no_domestic_parent = 0
+
         self.max_level = 0
-        self.global_ultimates, self.roots, self.entity_dict = self._get_entity_dict(company_df)
+        self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
+            self._get_entity_dict(company_df)
         self.virtual_entity_dict = self._create_virtual_entities()  # modified by _create_virtual_entities
         self.prev_to_now_dict = self._get_prev_to_now_dict(company_df)
-        self.json_tree = self.get_json_tree()
 
+        self.no_domestic_parent = 0
         self.family_dict, self.no_parent_set, self.branches_cnt = \
             self._get_parental_hierarchy(ignore_branches=False)
 
@@ -71,23 +59,33 @@ class EntityModel():
 		'''
         global_ultimates = set()
         roots = set()
+        feature_included = set(['id','name','size','sizeTotal','revenue',
+            'lastUpdate','revenue','address','LOB','latitude','longitude',
+            'type','Completeness','SIC','location', 'level'])
         entity_dict = {}
         # geolocator = DataBC()
         for i, row in company_df.iterrows():
             cur_id = row["CASE_DUNS"]
             entity_dict[cur_id] = {}
-            for feature in self.FEATURE_INCLUDED:
-                entity_dict[cur_id][feature] = row[feature]
 
             entity_dict[cur_id]['id'] = cur_id
             entity_dict[cur_id]['name'] = row["CASE_NAME"]
             entity_dict[cur_id]['size'] = row["EMPLOYEES_HERE"]
+            entity_dict[cur_id]['sizeTotal'] = row["EMPLOYEES_TOTAL"]
             entity_dict[cur_id]['revenue'] = row["SALES_US"]
-            entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
             entity_dict[cur_id]['lastUpdate'] = row["REPORT_DATE"]
+            entity_dict[cur_id]['revenue'] = row["SALES_US"]
+            entity_dict[cur_id]['address'] = row["CASE_ADDRESS1"]
+            entity_dict[cur_id]['LOB'] = row["LOB"]
+            entity_dict[cur_id]['level'] = row['GLOBAL_HIERARCHY_CODE']
+            entity_dict[cur_id]['latitude'] = row["latitude"]
+            entity_dict[cur_id]['longitude'] = row["longitude"]
+            entity_dict[cur_id]['domestic'] = row["DOMESTIC_DUNS"]
+            entity_dict[cur_id]['parent'] = row["PARENT_DUNS"]
 
+            entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
-            entity_dict[cur_id]['SIC'] = ', '.join([row["SIC1"], row["SIC2"], row["SIC3"], row["SIC4"], row["SIC5"], row["SIC6"]])
+            entity_dict[cur_id]['SIC'] = ', '.join([row["SIC" + str(i)] for i in range(1,7) if row["SIC" + str(i)] != ""])
             entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
 
             # infer gps information
@@ -117,29 +115,32 @@ class EntityModel():
             # track max level of the dataset in self.max_level
             self.max_level = max(self.max_level, int(row['GLOBAL_HIERARCHY_CODE']))
 
-        self.FEATURE_INCLUDED.extend(['Completeness', 'SIC', 'location'])
-        return global_ultimates, list(roots), entity_dict
+        return list(global_ultimates), list(roots), list(feature_included), entity_dict
 
     def _create_virtual_entities(self):
         virtual_entity_dict = {}
         # add an virtual root
-        virtual_entity_dict['Virtual_Root'] = {}
-        for feature in self.FEATURE_INCLUDED:
-            virtual_entity_dict['Virtual_Root'][feature] = ''
-        virtual_entity_dict['Virtual_Root']["CASE_DUNS"] = "Virtual_Root"
-        virtual_entity_dict['Virtual_Root']["CASE_NAME"] = "Virtual_Root"
-        virtual_entity_dict['Virtual_Root']["PARENT_DUNS"] = "Virtual_Root"
+        virtual_entity_dict[self.v_root] = {}
+        for feature in self.feature_included:
+            virtual_entity_dict[self.v_root][feature] = 'virtual'
+        virtual_entity_dict[self.v_root]["id"] = self.v_root
+        virtual_entity_dict[self.v_root]["name"] = self.v_root
+        virtual_entity_dict[self.v_root]["parent"] = self.v_root
+        virtual_entity_dict[self.v_root]["type"] = "virtual"
+        virtual_entity_dict[self.v_root]["level"] = "00"
 
         # create virtual nodes
         for i in range(1, self.max_level):
             v_node = "Virtual_Node_Level_" + str(i)
-            v_node_parent = "Virtual_Node_Level_" + str(i - 1) if i > 1 else "Virtual_Root"
+            v_node_parent = "Virtual_Node_Level_" + str(i - 1) if i > 1 else self.v_root
             virtual_entity_dict[v_node] = {}
-            for feature in self.FEATURE_INCLUDED:
-                virtual_entity_dict[v_node][feature] = ''
-            virtual_entity_dict[v_node]["CASE_DUNS"] = v_node
-            virtual_entity_dict[v_node]["CASE_NAME"] = v_node
-            virtual_entity_dict[v_node]["PARENT_DUNS"] = v_node_parent
+            for feature in self.feature_included:
+                virtual_entity_dict[v_node][feature] = 'virtual'
+            virtual_entity_dict[v_node]["id"] = v_node
+            virtual_entity_dict[v_node]["name"] = v_node
+            virtual_entity_dict[v_node]["parent"] = v_node_parent
+            virtual_entity_dict[v_node]["type"] = "virtual"
+            virtual_entity_dict[v_node]["level"] = str(i).zfill(2) 
         return virtual_entity_dict
 
 
@@ -159,13 +160,13 @@ class EntityModel():
         for i, key in enumerate(self.entity_dict):
             row = self.entity_dict[key]
 
-            cur_entity = row["CASE_DUNS"]
-            cur_parent = row["PARENT_DUNS"]
-            cur_domestic = row["DOMESTIC_DUNS"]
-            cur_level = int(row["GLOBAL_HIERARCHY_CODE"])
+            cur_entity = row["id"]
+            cur_parent = row["parent"]
+            cur_domestic = row["domestic"]
+            cur_level = int(row["level"])
 
             # check and count branches
-            if row["GLOBAL_STATUS_CODE"] == "2" and row["SUBSIDIARY_CODE"] == "0":
+            if row["type"] == "branch":
                 branches_cnt += 1
                 # ignore braches
                 if ignore_branches:
@@ -174,10 +175,10 @@ class EntityModel():
             # be definition, root
             if (cur_parent == cur_entity):
                 if self.verbose:
-                    print("[LOG] Root found:", self.entity_dict[cur_entity]["CASE_NAME"], ", ID =", cur_entity)
+                    print("[LOG] Root found:", self.entity_dict[cur_entity]["name"], ", ID =", cur_entity)
                 # family_dict[cur_entity]["parent"] = "ROOT"
-                family_dict[cur_entity]["parent"] = "Virtual_Root"
-                family_dict["Virtual_Root"]["children"].add(cur_entity)
+                family_dict[cur_entity]["parent"] = self.v_root
+                family_dict[self.v_root]["children"].add(cur_entity)
             # parent not in dataset
             elif cur_parent not in self.entity_dict:
                 # check if the previous duns of parent in dataset
@@ -190,14 +191,14 @@ class EntityModel():
                 # cannot find parent. try domestic parent. **Implemented** use domestic as parent
                 else:
                     if self.verbose:
-                        print("[WARNING]", self.entity_dict[cur_entity]["CASE_NAME"],
+                        print("[WARNING]", self.entity_dict[cur_entity]["name"],
                               "'s parent (", cur_parent, ") is not in the database.")
                     # check domestic as parent
                     if cur_domestic in self.entity_dict and cur_domestic != cur_entity:
                         # if cur_domestic != cur_entity:
                         if self.verbose:
                             print("Domestic in the database:",
-                                  self.entity_dict[cur_domestic]["CASE_NAME"])
+                                  self.entity_dict[cur_domestic]["name"])
                         # use domestic parent as parent
                         family_dict[cur_entity]["parent"] = cur_domestic
                         family_dict[cur_domestic]["children"].add(cur_entity)
@@ -211,12 +212,14 @@ class EntityModel():
                         if cur_parent not in self.virtual_entity_dict:
                             # create a virtual node as its parent
                             self.virtual_entity_dict[cur_parent] = {}
-                            for feature in self.FEATURE_INCLUDED:
-                                self.virtual_entity_dict[cur_parent][feature] = ''
-                            self.virtual_entity_dict[cur_parent]["CASE_DUNS"] = cur_parent
-                            self.virtual_entity_dict[cur_parent]["CASE_NAME"] = "Virtual Node: " + cur_parent
-                            self.virtual_entity_dict[cur_parent]["PARENT_DUNS"] = \
-                                "Virtual_Node_Level_" + str(cur_level - 1) if cur_level > 1 else "Virtual_Root"
+                            for feature in self.feature_included:
+                                self.virtual_entity_dict[cur_parent][feature] = 'virtual'
+                            self.virtual_entity_dict[cur_parent]["id"] = cur_parent
+                            self.virtual_entity_dict[cur_parent]["name"] = "Virtual Node: " + cur_parent
+                            self.virtual_entity_dict[cur_parent]["parent"] = \
+                                "Virtual_Node_Level_" + str(cur_level - 1) if cur_level > 1 else self.v_root
+                            self.virtual_entity_dict[cur_parent]["type"] = "virtual"
+                            self.virtual_entity_dict[cur_parent]["level"] = row["level"]
 
                         # add parent relation with the virtual node
                         family_dict[cur_entity]["parent"] = cur_parent
@@ -233,10 +236,10 @@ class EntityModel():
         for i, key in enumerate(self.virtual_entity_dict):
             row = self.virtual_entity_dict[key]
 
-            cur_entity = row["CASE_DUNS"]
-            cur_parent = row["PARENT_DUNS"]
+            cur_entity = row["id"]
+            cur_parent = row["parent"]
 
-            if cur_entity == "Virtual_Root":
+            if cur_entity == self.v_root:
                 continue
 
             # link virtual nodes to it parents
@@ -256,14 +259,11 @@ class EntityModel():
 
     def _extend_json_tree(self, family_dict, node):
         json_tree = {}
-        for feature in self.FEATURE_INCLUDED:
-            new_feature_name = feature
-            if feature in self.FEATURE_RENAME:
-                new_feature_name = self.FEATURE_RENAME[feature]
+        for feature in self.feature_included:
             try:
-                json_tree[new_feature_name] = self.entity_dict[node][feature].title()
+                json_tree[feature] = self.entity_dict[node][feature].title()
             except KeyError as e:
-                json_tree[new_feature_name] = self.virtual_entity_dict[node][feature].title()
+                json_tree[feature] = self.virtual_entity_dict[node][feature].title()
         if len(family_dict[node]["children"]) != 0:
             json_tree["children"] = []
             for entity in family_dict[node]["children"]:
@@ -286,19 +286,16 @@ class EntityModel():
             tmp = set()
             self._traverse_tree(family_dict, entity, tmp)
             no_parent_info.append((
-                self.entity_dict[entity]["case_name".upper()].lower(),
-                self.entity_dict[entity]["global_status_code".upper()],
-                self.entity_dict[entity]["subsidiary_code".upper()],
-                self.entity_dict[entity]["global_hierarchy_code".upper()],
-                self.HIERARCHY_DICT[
-                    (self.entity_dict[entity]["GLOBAL_STATUS_CODE"], self.entity_dict[entity]["SUBSIDIARY_CODE"])],
+                self.entity_dict[entity]["name"],
+                self.entity_dict[entity]["level"],
+                self.entity_dict[entity]["type"],
                 str(len(tmp))
             ))
             no_parent_tree_size.append(len(tmp))
 
         missing_parents = set()
         for index, tmp_root in enumerate(no_parent_set):
-            missing_parents.add(self.entity_dict[tmp_root]["PARENT_DUNS"])
+            missing_parents.add(self.entity_dict[tmp_root]["parent"])
 
         if self.verbose:
             print("{:55s} | {:6s} | {:6s} | {:6s} | {:10s} | {}".format(
@@ -323,12 +320,6 @@ class EntityModel():
     def get_json_tree(self, ignore_branches=False):
         family_dict, no_parent_set, branches_cnt = \
             self._get_parental_hierarchy(ignore_branches=ignore_branches)
-        # tree_size = self.stats_roots(family_dict)
-        # if root_type == "most":
-        #     root = self.roots[np.argmax(tree_size)]
-        # else:
-        #     root = self.roots[0]
-
         json_tree = self._extend_json_tree(family_dict, self.v_root)
         return json_tree
 
@@ -368,9 +359,10 @@ class EntityModel():
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Ingersoll_Rand"
+    company_name = "Eaton_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
-    entity_model.get_data_stats(ignore_branches=False)
-    print('# of no Domestic Parent:', entity_model.no_domestic_parent)
+    entity_model.get_json_tree(ignore_branches=False)
+    # entity_model.get_data_stats(ignore_branches=False)
+    # print('# of no Domestic Parent:', entity_model.no_domestic_parent)

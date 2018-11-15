@@ -8,3 +8,12 @@ var HIERARCHY_IGNORE_BRANCHES = true;
 var HIERARCHY_SHOW_VIRTUAL_NODE = false;
 
 
+// default colors
+var NODE_COLOR = {
+	"virtual": "#d3d3d3", 	// lightgray
+	"root": "#926757",		// brown
+	"branch": "#8fbc8f",	// steelblue
+	"subsidiary": "#8a6356"		// darkgreen
+}
+
+

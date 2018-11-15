@@ -121,13 +121,11 @@ var update_hierarchy_view = function (source) {
     nodeEnter.append("circle")
         .attr('class', 'nodeCircle')
         .attr("r", 0)
-        .style("stroke", function(d) {
-            return d.type == "3" ? "steelblue" : "darkseagreen";
-        })
+        .style("stroke", _get_node_color)
         .style("fill", function(d) {
-            return d._children ? "orange" : d.type == "3" ? "steelblue" : "darkseagreen";
+            return d._children ? "orange" : _get_node_color(d);
         })
-        .style("fill-opacity", _getOpacity)
+        .style("fill-opacity", _get_node_opacity)
         .on("mouseover", _mouseover)
         .on("mouseout", _mouseout)
         .on('click', _click_node);            
@@ -169,9 +167,9 @@ var update_hierarchy_view = function (source) {
     node.select("circle.nodeCircle")
         .attr("r", function(d) { return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4; })
         .style("fill", function(d) {
-            return d._children ? "orange" : d.type == "3" ? "steelblue" : "darkseagreen";
+            return d._children ? "orange" : _get_node_color(d);
         })
-        .style("fill-opacity", _getOpacity);
+        .style("fill-opacity", _get_node_opacity);
 
     // Transition nodes to their new position.
     var nodeUpdate = node.transition()
@@ -280,9 +278,13 @@ var _visit = function (node) {
     }
 }
 
-var _getOpacity = function (d) {
-
+var _get_node_opacity = function (d) {
     return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
+}
+
+var _get_node_color = function (d) {
+    console.log(d.type);
+    return NODE_COLOR[d.type];
 }
 
 var _mouseover = function (d) {
