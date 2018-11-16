@@ -1,6 +1,9 @@
+from functools import partial
+
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+from geopy import distance
 from geopy.geocoders import DataBC
 from pprint import pprint
 
@@ -28,17 +31,27 @@ class EntityModel():
         #     "LOB": "LOB",
         # }
         self.verbose = verbose
-        self.v_root = 'Virtual_Root'    # v_root will be the parent of all the company roots
+        self.v_root = 'Virtual_Root'  # v_root will be the parent of all the company roots
 
     def upload(self, file):
-        company_df = pd.read_csv(file, dtype=str)
-        company_df.fillna("", inplace=True)
+        """
+        upload DB csv file; initialize variables associated with the file
+        :param file:
+        """
+
+        self.company_df = pd.read_csv(file, dtype=str)
+        self.company_df.fillna("", inplace=True)
+        size_quantiles = self.company_df['EMPLOYEES_HERE'].astype(int).quantile(np.linspace(0.1,1,10)).values
+
+        def _get_quantile(employee_num):
+            return np.argmax((size_quantiles - int(employee_num)) > 0) + 1
+        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(_get_quantile) # scale number of employee to size 1-10
 
         self.max_level = 0
         self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
-            self._get_entity_dict(company_df)
-        self.virtual_entity_dict = self._create_virtual_entities()  # modified by _create_virtual_entities
-        self.prev_to_now_dict = self._get_prev_to_now_dict(company_df)
+            self._get_entity_dict(self.company_df)
+        self.virtual_entity_dict = self._create_virtual_entities()
+        self.prev_to_now_dict = self._get_prev_to_now_dict(self.company_df)
 
         self.no_domestic_parent = 0
         self.family_dict, self.no_parent_set, self.branches_cnt = \
@@ -59,9 +72,8 @@ class EntityModel():
 		'''
         global_ultimates = set()
         roots = set()
-        feature_included = set(['id','name','size','sizeTotal','revenue',
-            'lastUpdate','revenue','address','LOB','latitude','longitude',
-            'type','Completeness','SIC','location', 'level'])
+        feature_included = {'id', 'name', 'size', 'sizeTotal', 'revenue', 'lastUpdate', 'revenue', 'address', 'LOB',
+                            'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'location', 'level'}
         entity_dict = {}
         # geolocator = DataBC()
         for i, row in company_df.iterrows():
@@ -70,7 +82,7 @@ class EntityModel():
 
             entity_dict[cur_id]['id'] = cur_id
             entity_dict[cur_id]['name'] = row["CASE_NAME"]
-            entity_dict[cur_id]['size'] = row["EMPLOYEES_HERE"]
+            entity_dict[cur_id]['size'] = row["size"]
             entity_dict[cur_id]['sizeTotal'] = row["EMPLOYEES_TOTAL"]
             entity_dict[cur_id]['revenue'] = row["SALES_US"]
             entity_dict[cur_id]['lastUpdate'] = row["REPORT_DATE"]
@@ -78,15 +90,21 @@ class EntityModel():
             entity_dict[cur_id]['address'] = row["CASE_ADDRESS1"]
             entity_dict[cur_id]['LOB'] = row["LOB"]
             entity_dict[cur_id]['level'] = row['GLOBAL_HIERARCHY_CODE']
-            entity_dict[cur_id]['latitude'] = row["latitude"]
-            entity_dict[cur_id]['longitude'] = row["longitude"]
+            # check if gps info is included in the dataset
+            if 'latitude' and 'longitude' in row.keys():
+                entity_dict[cur_id]['latitude'] = row["latitude"]
+                entity_dict[cur_id]['longitude'] = row["longitude"]
+                feature_included.add('latitude')
+                feature_included.add('longitude')
             entity_dict[cur_id]['domestic'] = row["DOMESTIC_DUNS"]
             entity_dict[cur_id]['parent'] = row["PARENT_DUNS"]
 
             entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
-            entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '')/len(row))
-            entity_dict[cur_id]['SIC'] = ', '.join([row["SIC" + str(i)] for i in range(1,7) if row["SIC" + str(i)] != ""])
-            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
+            entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '') / len(row))
+            entity_dict[cur_id]['SIC'] = ', '.join(
+                [row["SIC" + str(i)] for i in range(1, 7) if row["SIC" + str(i)] != ""])
+            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row[
+                'CASE_COUNTRY_NAME']
 
             # infer gps information
             # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
@@ -118,6 +136,10 @@ class EntityModel():
         return list(global_ultimates), list(roots), list(feature_included), entity_dict
 
     def _create_virtual_entities(self):
+        """
+        For each level create an virtual node. All the virtual will be saved in virtual_entity_dict
+        :return: virtual_entity_dict
+        """
         virtual_entity_dict = {}
         # add an virtual root
         virtual_entity_dict[self.v_root] = {}
@@ -126,8 +148,10 @@ class EntityModel():
         virtual_entity_dict[self.v_root]["id"] = self.v_root
         virtual_entity_dict[self.v_root]["name"] = self.v_root
         virtual_entity_dict[self.v_root]["parent"] = self.v_root
-        virtual_entity_dict[self.v_root]["type"] = "virtual"
+        virtual_entity_dict[self.v_root]["type"] = "virtual_root"
         virtual_entity_dict[self.v_root]["level"] = "00"
+        virtual_entity_dict[self.v_root]["size"] = 1
+        virtual_entity_dict[self.v_root]["revenue"] = 0
 
         # create virtual nodes
         for i in range(1, self.max_level):
@@ -140,14 +164,14 @@ class EntityModel():
             virtual_entity_dict[v_node]["name"] = v_node
             virtual_entity_dict[v_node]["parent"] = v_node_parent
             virtual_entity_dict[v_node]["type"] = "virtual"
-            virtual_entity_dict[v_node]["level"] = str(i).zfill(2) 
+            virtual_entity_dict[v_node]["level"] = str(i).zfill(2)
+            virtual_entity_dict[v_node]["size"] = 1
+            virtual_entity_dict[v_node]["revenue"] = 0
         return virtual_entity_dict
-
 
     def _get_parental_hierarchy(self, ignore_branches=True):
         """
-
-        :param ignore_branches:
+        :param ignore_branches
         :return:
         family_dict: {DUNS_number: {'parent':'', 'children':[]}, ...}
         no_parent_set: set of children's DUNS
@@ -252,6 +276,13 @@ class EntityModel():
         return family_dict, no_parent_set, branches_cnt
 
     def _traverse_tree(self, family_dict, node, entity_in_tree):
+        """
+        Give a node, traverse all its children in the tree. Store all the nodes in a passed set
+        :param family_dict:
+        :param node:
+        :param entity_in_tree:
+        :return:
+        """
         for child in family_dict[node]["children"]:
             self._traverse_tree(family_dict, child, entity_in_tree)
         entity_in_tree.add(node)
@@ -261,9 +292,9 @@ class EntityModel():
         json_tree = {}
         for feature in self.feature_included:
             try:
-                json_tree[feature] = self.entity_dict[node][feature].title()
+                json_tree[feature] = self.entity_dict[node][feature]
             except KeyError as e:
-                json_tree[feature] = self.virtual_entity_dict[node][feature].title()
+                json_tree[feature] = self.virtual_entity_dict[node][feature]
         if len(family_dict[node]["children"]) != 0:
             json_tree["children"] = []
             for entity in family_dict[node]["children"]:
@@ -346,7 +377,7 @@ class EntityModel():
         :return:
         {case_duns: {"latitude": latitude, "longitude": longitude, “size”: employee_num, "revenue": revenue, ...}}
         """
-    
+
         locations_dict = {}
         if case_duns == 'ALL':
             return self.entity_dict
@@ -355,6 +386,44 @@ class EntityModel():
             self._traverse_tree(self.family_dict, node=case_duns, entity_in_tree=entities)
             return {entity: self.entity_dict[entity] for entity in entities}
 
+    def find_siblings(self, case_duns, digits=4, logic='OR', max_num=10):
+        company_df = self.company_df
+        entity = self.entity_dict[case_duns]
+        lat1 = float(entity['latitude'])
+        lon1 = float(entity['longitude'])
+
+        def _compare_sics(row):
+            sics = ''.join(sorted([row["SIC" + str(i)][:digits] for i in range(1, 7) if row["SIC" + str(i)] != ""]))
+            return sics == combined_sics
+
+        def _cal_dist(row):
+            lat2, lon2 = float(row['latitude']), float(row['longitude'])
+            return distance.distance((lat1, lon1), (lat2,lon2))
+
+        sics = entity['SIC'].split(sep=', ')
+        if logic == 'OR':
+            for sic in sics:
+                if str(sic) != '':
+                    siblings = company_df.loc[(company_df['SIC1'].apply(lambda x: x[:digits] == sic[:digits])) |
+                                            (company_df['SIC2'].apply(lambda x: x[:digits] == sic[:digits])) |
+                                            (company_df['SIC3'].apply(lambda x: x[:digits] == sic[:digits])) |
+                                            (company_df['SIC4'].apply(lambda x: x[:digits] == sic[:digits])) |
+                                            (company_df['SIC5'].apply(lambda x: x[:digits] == sic[:digits])) |
+                                            (company_df['SIC6'].apply(lambda x: x[:digits] == sic[:digits]))
+                                           ]
+        else: # logic == 'AND'
+            combined_sics = ''.join(sorted([sic[:digits] for sic in sics]))
+            if str(combined_sics) != '':
+                siblings = company_df.loc[(company_df.apply(_compare_sics, axis=1))]
+
+        # sort result (by distance asc)
+        siblings['distance'] = siblings.apply(_cal_dist, axis=1)
+        nearest_10_siblings = siblings.sort_values('distance')[:max_num]
+
+        # change from df to dict
+        _, _, _, nearest_10_siblings = self._get_entity_dict(nearest_10_siblings)
+
+        return nearest_10_siblings
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
@@ -363,5 +432,6 @@ if __name__ == '__main__':
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
     entity_model.get_json_tree(ignore_branches=False)
+    print(entity_model.find_siblings('00989222823'))
     # entity_model.get_data_stats(ignore_branches=False)
     # print('# of no Domestic Parent:', entity_model.no_domestic_parent)
