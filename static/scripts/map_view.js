@@ -134,7 +134,8 @@ var _get_colors = function (type) {
 }
 
 var _get_radius = function (size) {
-    return Math.sqrt(Math.sqrt(size)) * 2 + 4;
+    // return Math.sqrt(Math.sqrt(size)) * 2 + 4;
+    return size;
 }
 
 var _get_opacity = function (revenue) {

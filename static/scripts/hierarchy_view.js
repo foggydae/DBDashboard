@@ -323,7 +323,8 @@ var _get_node_color = function (d) {
 }
 
 var _get_node_size = function (d) {
-    return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4;
+    // return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4;
+    return +d.size;
 }
 
 var _hide_virtual_node = function (d) {
