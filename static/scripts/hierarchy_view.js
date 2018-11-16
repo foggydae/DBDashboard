@@ -1,3 +1,4 @@
+'use strict';
 /* implemented based on Rob Schmuecker's DNDTree Demo */
 
 // global variables for hierarchy view
@@ -32,7 +33,7 @@ var init_hierarchy_view = function () {
     // Append a group which holds all nodes and which the zoom Listener can act upon.
     svgGroup = baseSvg.append("g");
 
-    load_hierarchy_view(ignore_branches=HIERARCHY_IGNORE_BRANCHES);
+    load_hierarchy_view(HIERARCHY_IGNORE_BRANCHES);
 }
 
 var load_hierarchy_view = function (ignore_branches=true) {
@@ -44,14 +45,12 @@ var load_hierarchy_view = function (ignore_branches=true) {
             console.log("Error", "Failed in hierarchy data.");
         } else {
             var treeData = JSON.parse(rtnString);
-            console.log(treeData);
 
             // Call _visit function to establish maxLabelLength
             _visit(treeData);
-
             // Define the root
             root = treeData;
-
+            console.log(root);
             update_hierarchy_view(root);
             // Layout the tree initially and center on the root node.
             center_node(root["children"][0]);
@@ -89,7 +88,7 @@ var update_hierarchy_view = function (source) {
 
     childCount(0, root);
     var newHeight = d3.max(levelWidth) * 35; // 25 pixels per line  
-    tree = treeLayout.size([newHeight, viewerWidth]);
+    var tree = treeLayout.size([newHeight, viewerWidth]);
 
     // Compute the new tree layout.
     var nodes = tree.nodes(root).reverse(),
@@ -104,7 +103,7 @@ var update_hierarchy_view = function (source) {
     });
 
     // Update the nodes…
-    node = svgGroup.selectAll("g.node")
+    var node = svgGroup.selectAll("g.node")
         .data(nodes, function(d) {
             return d.id || (d.id = ++i);
         });
@@ -122,9 +121,7 @@ var update_hierarchy_view = function (source) {
         .attr('class', 'nodeCircle')
         .attr("r", 0)
         .style("stroke", _get_node_color)
-        .style("fill", function(d) {
-            return d._children ? "orange" : _get_node_color(d);
-        })
+        .style("fill", _get_node_color)
         .style("fill-opacity", _get_node_opacity)
         .on("mouseover", _mouseover)
         .on("mouseout", _mouseout)
@@ -165,10 +162,8 @@ var update_hierarchy_view = function (source) {
 
     // Change the circle fill depending on whether it has children and is collapsed
     node.select("circle.nodeCircle")
-        .attr("r", function(d) { return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4; })
-        .style("fill", function(d) {
-            return d._children ? "orange" : _get_node_color(d);
-        })
+        .attr("r", _get_node_size)
+        .style("fill", _get_node_color)
         .style("fill-opacity", _get_node_opacity);
 
     // Transition nodes to their new position.
@@ -249,9 +244,9 @@ var center_node = function (source) {
     if (typeof source == "string") {
         source = idNodeDict[source];
     }
-    scale = zoomListener.scale();
-    x = -source.y0;
-    y = -source.x0;
+    var scale = zoomListener.scale();
+    var x = -source.y0;
+    var y = -source.x0;
     x = x * scale + baseSvg.attr("width") / 2;
     y = y * scale + baseSvg.attr("height") / 2;
     d3.select('g').transition()
@@ -276,16 +271,6 @@ var _visit = function (node) {
             _visit(children[i]);
         }
     }
-}
-
-var _get_node_opacity = function (d) {
-    return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
-}
-
-var _get_node_color = function (d) {
-    console.log(d.type);
-    console.log(NODE_COLOR[d.type]);
-    return NODE_COLOR[d.type];
 }
 
 var _mouseover = function (d) {
@@ -329,15 +314,35 @@ var _click_name = function (d) {
     update_map_view(d.id);
 }
 
+var _get_node_opacity = function (d) {
+    return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
+}
+
+var _get_node_color = function (d) {
+    return d._children ? "orange" : NODE_COLOR[d.type];
+}
+
+var _get_node_size = function (d) {
+    // return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4;
+    return +d.size;
+}
+
 var _hide_virtual_node = function (d) {
-    if (HIERARCHY_SHOW_VIRTUAL_NODE && d.PARENT_DUNS.startsWith("Virtual")) {
+    if (d.type == "virtual_root") {
         return "none";
     }
+    if (!HIERARCHY_SHOW_VIRTUAL_NODE && d.type == "virtual") {
+        return "none";
+    }
+
     return "unset";
 }
 
 var _hide_virtual_link = function (d) {
-    if (HIERARCHY_SHOW_VIRTUAL_NODE && (d.source.PARENT_DUNS.startsWith("Virtual") || d.target.PARENT_DUNS.startsWith("Virtual"))) {
+    if (d.source.type == "virtual_root" || d.target.type == "virtual_root") {
+        return "none";
+    }
+    if (!HIERARCHY_SHOW_VIRTUAL_NODE && (d.source.type == "virtual" || d.target.type == "virtual")) {
         return "none";
     }
     return "unset";
