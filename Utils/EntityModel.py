@@ -45,7 +45,8 @@ class EntityModel():
 
         def _get_quantile(employee_num):
             return np.argmax((size_quantiles - int(employee_num)) > 0) + 1
-        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(_get_quantile) # scale number of employee to size 1-10
+        max_employees_here = self.company_df['EMPLOYEES_HERE'].astype(float).max()
+        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+1) # scale number of employee to size 1-10
 
         self.max_level = 0
         self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
@@ -244,6 +245,8 @@ class EntityModel():
                                 "Virtual_Node_Level_" + str(cur_level - 1) if cur_level > 1 else self.v_root
                             self.virtual_entity_dict[cur_parent]["type"] = "virtual"
                             self.virtual_entity_dict[cur_parent]["level"] = row["level"]
+                            self.virtual_entity_dict[cur_parent]["size"] = 1
+                            self.virtual_entity_dict[cur_parent]["revenue"] = 0
 
                         # add parent relation with the virtual node
                         family_dict[cur_entity]["parent"] = cur_parent
