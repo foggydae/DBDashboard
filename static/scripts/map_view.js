@@ -66,7 +66,8 @@ var init_marker_dict = function (map_data) {
 					radius: _get_radius(+map_data[key]["size"]),
 					color: _get_colors(map_data[key]["type"]),
 					fillColor: _get_colors(map_data[key]["type"]),
-					fillOpacity: _get_opacity(map_data[key]["revenue"])
+					fillOpacity: _get_opacity(map_data[key]["revenue"]),
+					zindex: _get_z_index(map_data[key]["type"])
 				}
 			)
 			.bindPopup(
@@ -138,4 +139,12 @@ var _get_radius = function (size) {
 
 var _get_opacity = function (revenue) {
     return Math.log(+revenue + 1) / maxValue * 0.9 + 0.1;
+}
+
+var _get_z_index = function (type) {
+	if (type == "branch") {
+		return 1;
+	} else {
+		return 999;
+	}
 }

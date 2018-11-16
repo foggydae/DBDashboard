@@ -273,18 +273,6 @@ var _visit = function (node) {
     }
 }
 
-var _get_node_opacity = function (d) {
-    return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
-}
-
-var _get_node_color = function (d) {
-    return d._children ? "orange" : NODE_COLOR[d.type];
-}
-
-var _get_node_size = function (d) {
-    return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4;
-}
-
 var _mouseover = function (d) {
     $("#hierarchy-info-name").html(d.name);
     $("#hierarchy-info-location").html(d.location);
@@ -326,15 +314,34 @@ var _click_name = function (d) {
     update_map_view(d.id);
 }
 
+var _get_node_opacity = function (d) {
+    return Math.log(+d.revenue + 1) / maxValue * 0.9 + 0.1;
+}
+
+var _get_node_color = function (d) {
+    return d._children ? "orange" : NODE_COLOR[d.type];
+}
+
+var _get_node_size = function (d) {
+    return Math.sqrt(Math.sqrt(+d.size)) * 2 + 4;
+}
+
 var _hide_virtual_node = function (d) {
-    if (HIERARCHY_SHOW_VIRTUAL_NODE && d.PARENT_DUNS.startsWith("Virtual")) {
+    if (d.type == "virtual_root") {
         return "none";
     }
+    if (!HIERARCHY_SHOW_VIRTUAL_NODE && d.type == "virtual") {
+        return "none";
+    }
+
     return "unset";
 }
 
 var _hide_virtual_link = function (d) {
-    if (HIERARCHY_SHOW_VIRTUAL_NODE && (d.source.PARENT_DUNS.startsWith("Virtual") || d.target.PARENT_DUNS.startsWith("Virtual"))) {
+    if (d.source.type == "virtual_root" || d.target.type == "virtual_root") {
+        return "none";
+    }
+    if (!HIERARCHY_SHOW_VIRTUAL_NODE && (d.source.type == "virtual" || d.target.type == "virtual")) {
         return "none";
     }
     return "unset";

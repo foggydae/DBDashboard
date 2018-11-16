@@ -5,7 +5,7 @@ var HIERARCHY_IGNORE_BRANCHES = true;
 
 
 // By default, show virtual node in hierarchy view
-var HIERARCHY_SHOW_VIRTUAL_NODE = false;
+var HIERARCHY_SHOW_VIRTUAL_NODE = true;
 
 
 // default colors
