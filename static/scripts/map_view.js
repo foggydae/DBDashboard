@@ -1,5 +1,5 @@
 var map;
-var marker_dict;
+var marker_dict, maxValue;
 var entities, branches, controller, baseMaps;
 
 var init_map_view = function () {
@@ -30,6 +30,11 @@ var init_map_view = function () {
 			console.log("Error", "Failed in map data.");
 		} else {
 			var map_data = JSON.parse(rtn_string);
+			marker_dict = {};
+			maxValue = 0;
+			for (var key in map_data) {
+			    maxValue = Math.max(Math.log(+map_data[key]["revenue"] + 1), maxValue);
+			}
 			init_marker_dict(map_data);
 			var new_layers = get_entity_group(map_data);
 			entities = new_layers[0];
@@ -48,7 +53,6 @@ var init_map_view = function () {
 }
 
 var init_marker_dict = function (map_data) {
-	marker_dict = {};
 	for (var key in map_data) {
 		marker_dict[key] = L.circleMarker(
 				[
@@ -59,7 +63,7 @@ var init_marker_dict = function (map_data) {
 					id: key,
 					weight: 1,
 					fill: true,
-					radius: _get_radius(map_data[key]["size"]),
+					radius: _get_radius(+map_data[key]["size"]),
 					color: _get_colors(map_data[key]["type"]),
 					fillColor: _get_colors(map_data[key]["type"]),
 					fillOpacity: _get_opacity(map_data[key]["revenue"])
@@ -125,13 +129,13 @@ var update_map_view = function (duns) {
 }
 
 var _get_colors = function (type) {
-	return "#ff9944";
+    return NODE_COLOR[type];
 }
 
 var _get_radius = function (size) {
-	return 5;
+    return Math.sqrt(Math.sqrt(size)) * 2 + 4;
 }
 
 var _get_opacity = function (revenue) {
-	return 0.5;
+    return Math.log(+revenue + 1) / maxValue * 0.9 + 0.1;
 }
