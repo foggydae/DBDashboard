@@ -46,7 +46,7 @@ class EntityModel():
         def _get_quantile(employee_num):
             return np.argmax((size_quantiles - int(employee_num)) > 0) + 1
         max_employees_here = self.company_df['EMPLOYEES_HERE'].astype(float).max()
-        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+1) # scale number of employee to size 1-10
+        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
 
         self.max_level = 0
         self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
