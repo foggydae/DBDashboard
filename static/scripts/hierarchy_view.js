@@ -285,7 +285,7 @@ var _mouseover = function (d) {
 }
 
 var _mouseout = function (d) {
-
+    $("#hierarchy-info").css("display", "none");
 }
 
 // Toggle children on click.
