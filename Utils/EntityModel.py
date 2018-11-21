@@ -7,6 +7,8 @@ from geopy import distance
 from geopy.geocoders import DataBC
 from pprint import pprint
 
+import json
+
 
 class EntityModel():
 
@@ -17,19 +19,6 @@ class EntityModel():
             ('2', '0'): "branch",
             ('0', '3'): "subsidiary"
         }
-        # self.FEATURE_RENAME = {
-        #     "CASE_DUNS": "id",
-        #     "CASE_NAME": "name",
-        #     "CASE_SECOND_NAME": "subName",
-        #     "CASE_ADDRESS1": "address",
-        #     "CASE_COUNTRY_NAME": "country",
-        #     "CASE_STATE_NAME": "state",
-        #     "CASE_CITY": "city",
-        #     "GLOBAL_STATUS_CODE": "status",
-        #     "SUBSIDIARY_CODE": "type",
-        #     "GLOBAL_HIERARCHY_CODE": "level",
-        #     "LOB": "LOB",
-        # }
         self.verbose = verbose
         self.v_root = 'Virtual_Root'  # v_root will be the parent of all the company roots
 
@@ -45,6 +34,7 @@ class EntityModel():
 
         def _get_quantile(employee_num):
             return np.argmax((size_quantiles - int(employee_num)) > 0) + 1
+
         max_employees_here = self.company_df['EMPLOYEES_HERE'].astype(float).max()
         self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
 
@@ -56,7 +46,7 @@ class EntityModel():
 
         self.no_domestic_parent = 0
         self.family_dict, self.no_parent_set, self.branches_cnt = \
-            self._get_parental_hierarchy(ignore_branches=False)
+            self._get_parental_hierarchy()
 
     def _get_prev_to_now_dict(self, company_df):
         prev_to_now = {}
@@ -71,7 +61,7 @@ class EntityModel():
         '''
 		Extract info dict from the pandas dataframe.
 		'''
-        global_ultimates = set()
+        global_ultimates = {}
         roots = set()
         feature_included = {'id', 'name', 'size', 'sizeTotal', 'revenue', 'lastUpdate', 'revenue', 'address', 'LOB',
                             'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'location', 'level'}
@@ -104,8 +94,7 @@ class EntityModel():
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '') / len(row))
             entity_dict[cur_id]['SIC'] = ', '.join(
                 [row["SIC" + str(i)] for i in range(1, 7) if row["SIC" + str(i)] != ""])
-            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row[
-                'CASE_COUNTRY_NAME']
+            entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
 
             # infer gps information
             # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
@@ -127,14 +116,18 @@ class EntityModel():
             #     print(address1)
             #     print(location)
 
-            global_ultimates.add(row["GLOBAL_DUNS"])
+            global_ultimates[row["GLOBAL_DUNS"]] = {
+                "name": row["GLOBAL_NAME"], 
+                "location": row['GLOBAL_CITY'] + ", " + row['GLOBAL_STATE'] + ", " + row['GLOBAL_COUNTRY_NAME'],
+                "address": row['GLOBAL_ADDRESS']
+            }
             if row["CASE_DUNS"] == row["PARENT_DUNS"]:
                 roots.add(row["CASE_DUNS"])
 
             # track max level of the dataset in self.max_level
             self.max_level = max(self.max_level, int(row['GLOBAL_HIERARCHY_CODE']))
 
-        return list(global_ultimates), list(roots), list(feature_included), entity_dict
+        return global_ultimates, list(roots), list(feature_included), entity_dict
 
     def _create_virtual_entities(self):
         """
@@ -170,7 +163,7 @@ class EntityModel():
             virtual_entity_dict[v_node]["revenue"] = 0
         return virtual_entity_dict
 
-    def _get_parental_hierarchy(self, ignore_branches=True):
+    def _get_parental_hierarchy(self, ignore_branches=False):
         """
         :param ignore_branches
         :return:
@@ -312,13 +305,26 @@ class EntityModel():
         for child in root["children"]:
             self._look_for_entity(child, entity_dun, result)
 
-    def stats_parent_not_in_dataset_entities(self, family_dict, no_parent_set):
+    def _highlight_rules(self, duns, key):
+        # parent-not-in-dataset entity, highlight the parent duns
+        if duns in self.no_parent_set and key == "parent":
+            return "yes"
+        # global ultimate that does not show up in the dataset
+        if duns in self.global_ultimates and duns not in self.roots:
+            return "yes"
+        # global ultimate that does not show up in the dataset
+        if self.entity_dict[duns][key] in self.global_ultimates and self.entity_dict[duns][key] not in self.roots:
+            return "yes"
+        # others
+        return "no"
+
+    def _count_pnids(self):
         no_parent_tree_size = []
         no_parent_info = []
 
-        for entity in no_parent_set:
+        for entity in self.no_parent_set:
             tmp = set()
-            self._traverse_tree(family_dict, entity, tmp)
+            self._traverse_tree(self.family_dict, entity, tmp)
             no_parent_info.append((
                 self.entity_dict[entity]["name"],
                 self.entity_dict[entity]["level"],
@@ -328,7 +334,7 @@ class EntityModel():
             no_parent_tree_size.append(len(tmp))
 
         missing_parents = set()
-        for index, tmp_root in enumerate(no_parent_set):
+        for index, tmp_root in enumerate(self.no_parent_set):
             missing_parents.add(self.entity_dict[tmp_root]["parent"])
 
         if self.verbose:
@@ -343,34 +349,59 @@ class EntityModel():
 
         return no_parent_tree_size, missing_parents
 
-    def stats_roots(self, family_dict):
+    def _count_roots(self):
         tree_size = []
         for tmp_root in self.roots:
             entity_in_tree = set()
-            self._traverse_tree(family_dict, tmp_root, entity_in_tree)
+            self._traverse_tree(self.family_dict, tmp_root, entity_in_tree)
             tree_size.append(len(entity_in_tree))
         return tree_size
 
     def get_json_tree(self, ignore_branches=False):
-        family_dict, no_parent_set, branches_cnt = \
-            self._get_parental_hierarchy(ignore_branches=ignore_branches)
+        if ignore_branches:
+            family_dict, _, _ = \
+                self._get_parental_hierarchy(ignore_branches=True)
+        else:
+            family_dict = self.family_dict
+
         json_tree = self._extend_json_tree(family_dict, self.v_root)
         return json_tree
 
-    def get_data_stats(self, ignore_branches=False):
-        family_dict, no_parent_set, branches_cnt = \
-            self._get_parental_hierarchy(ignore_branches=ignore_branches)
-        tree_size = self.stats_roots(family_dict)
-        no_parent_tree_size, missing_parents = self.stats_parent_not_in_dataset_entities(family_dict, no_parent_set)
+    def get_data_stats(self, verbose=True):
+        tree_size = self._count_roots()
+        no_parent_tree_size, missing_parents = self._count_pnids()
 
-        print("# of All Entity:", len(self.entity_dict), "| # of Non-Branch Entity:",
-              len(self.entity_dict) - branches_cnt)
-        print("Root Entity (Parent's Duns = Self's Duns):", len(self.roots))
-        print("Global Ultimates:", len(self.global_ultimates))
-        print("In-Tree Entity (Ultimately reports to one of Root Entity):", np.sum(tree_size))
-        print("Parent-Not-In-Dataset Entity:", len(no_parent_set),
-              "(Missing Parents: " + str(len(missing_parents)) + ")")
-        print("Out-Tree Entity (Ultimately reports to one of the Missing Parents):", np.sum(no_parent_tree_size))
+        if verbose:
+            print("# of All Entity:", len(self.entity_dict), "| # of Non-Branch Entity:",
+                  len(self.entity_dict) - self.branches_cnt)
+            print("Root Entity (Parent's Duns = Self's Duns):", len(self.roots))
+            print("Global Ultimates:", len(self.global_ultimates))
+            print("In-Tree Entity (Ultimately reports to one of Root Entity):", np.sum(tree_size))
+            print("Parent-Not-In-Dataset Entity:", len(self.no_parent_set),
+                  "(Missing Parents: " + str(len(missing_parents)) + ")")
+            print("Out-Tree Entity (Ultimately reports to one of the Missing Parents):", np.sum(no_parent_tree_size))
+
+        tree_count = {
+            "total": len(self.entity_dict),
+            "non_branch": len(self.entity_dict) - self.branches_cnt,
+            "branch": self.branches_cnt,
+            "root": len(self.roots),
+            "in_tree": int(np.sum(tree_size)),
+            "pnid": len(self.no_parent_set),
+            "out_tree": int(np.sum(no_parent_tree_size))
+        }
+        return tree_count
+
+    def get_pnid_list(self):
+        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]} 
+                for duns in self.no_parent_set]
+
+    def get_global_ultimates(self):
+        return [{duns:{"value":self.global_ultimates[duns]["name"],"status":self._highlight_rules(duns, "name")} for duns in self.global_ultimates}]
+
+    def get_metadata(self):
+        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]}
+                for duns in self.entity_dict]
 
     def get_gps(self, case_duns='ALL'):
         """
@@ -380,7 +411,6 @@ class EntityModel():
         :return:
         {case_duns: {"latitude": latitude, "longitude": longitude, “size”: employee_num, "revenue": revenue, ...}}
         """
-
         locations_dict = {}
         if case_duns == 'ALL':
             return self.entity_dict
@@ -430,11 +460,19 @@ class EntityModel():
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Eaton_gps"
+    company_name = "Ingersoll_Rand_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
-    entity_model.get_json_tree(ignore_branches=False)
-    print(entity_model.find_siblings('00989222823'))
+    message = {
+        "count_dict": entity_model.get_data_stats(verbose=True),
+        "pnid_list": entity_model.get_pnid_list(),
+        "global_ultimate_list": entity_model.get_global_ultimates(),
+        "metadata_list": entity_model.get_metadata()
+        # "filename": cur_file_name
+    }
+    pprint(json.dumps(message))
+    # entity_model.get_json_tree(ignore_branches=False)
+    # print(entity_model.find_siblings('00989222823'))
     # entity_model.get_data_stats(ignore_branches=False)
     # print('# of no Domestic Parent:', entity_model.no_domestic_parent)

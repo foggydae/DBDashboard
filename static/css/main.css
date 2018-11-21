@@ -105,6 +105,7 @@ body {
     box-shadow: 1px 1px 3px #ccc;
     font-size: 12px;
     display: none;
+    cursor: none;
 }
 
 .info-header {
@@ -151,6 +152,7 @@ body {
 	max-width: 100%;
 	margin-right: auto;
 	margin-left: auto;
+	display: none;
 }
 
 #company-container,
@@ -270,11 +272,13 @@ body {
 .side-info {
 	font-size: 30px;
 	font-weight: 900;
+	font-family: monospace, sans-serif;
 }
 
-.total-count {
+#total-count {
 	font-size: 50px;
 	font-weight: 900;
+	font-family: monospace, sans-serif;
 }
 
 #in-tree-stats-container {
@@ -295,17 +299,26 @@ body {
 	align-items: center;
 }
 
+.detail-stats-border {
+	/*border-bottom: 1px dashed #ccc;*/
+}
+
+.demo-img > img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
 /** parent-not-in-database entities **/
 
 #pnid-entities-container {
-	height: 100px;
+	max-height: 300px;
 	overflow-x: scroll;
 }
 
 /** metadata **/
 
 #metadata-container {
-	height: 300px;
+	max-height: 500px;
 	overflow-x: scroll;
 }
 

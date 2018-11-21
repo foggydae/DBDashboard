@@ -5,6 +5,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 entity_model = EntityModel(verbose=False)
+cur_file_name = ""
 
 @app.route("/", methods=['GET'])
 def Index():
@@ -14,11 +15,12 @@ def Index():
 @app.route("/api/load_file", methods=["POST", "GET"])
 def load_file():
     if request.method == 'POST':
-        global entity_model
+        global entity_model, cur_file_name
         entity_model = EntityModel(verbose=False)
         file = request.files["myfile"]
         entity_model.upload(file)
-    return render_template("dashboard.html", filename=file.filename)
+        cur_file_name = file.filename
+    return render_template("dashboard.html", filename=cur_file_name)
 
 
 @app.route("/api/get_hierarchy_data/<message>", methods=["GET"])
@@ -37,6 +39,32 @@ def get_map_data(message):
     duns = message_dict['select_entity']
     try:
         return json.dumps(entity_model.get_gps(duns))
+    except:
+        return "NO_DATA"
+
+
+@app.route("/api/get_summary_data", methods=["GET"])
+def get_summary_data():
+    # global entity_model, cur_file_name
+    print("filename: ", cur_file_name)
+    try:
+        print("count_dict")
+        count_dict = entity_model.get_data_stats(verbose=False)
+        print("pnid_list")
+        pnid_list = entity_model.get_pnid_list()
+        print("global_ultimate_list")
+        global_ultimate_list = entity_model.get_global_ultimates()
+        print("metadata_list")
+        metadata_list = entity_model.get_metadata()
+        print("done")
+        result = {
+            "count_dict": count_dict,
+            "pnid_list": pnid_list,
+            "global_ultimate_list": global_ultimate_list,
+            "metadata_list": metadata_list,
+            "filename": cur_file_name
+        }
+        return json.dumps(result)
     except:
         return "NO_DATA"
 

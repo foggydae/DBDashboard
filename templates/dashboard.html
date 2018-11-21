@@ -30,7 +30,7 @@
 			<nav class="my-2 my-md-0 mr-md-3">
 				<span id="dataset-tag" class="navbar-brand font-weight-light">Current Dataset: {{filename}}</span>
 			</nav>
-			<a href="/get_meta_data"><button id="summary-button" class="btn btn-outline-light">Summary</button></a>
+			<button id="summary-button" class="btn btn-outline-light">Summary</button>
 			<a href="/"><button id="reset-button" class="btn btn-outline-light">Reload</button></a>
 		</nav>
 
@@ -44,7 +44,7 @@
 						<div><span class="info-header">SIC:</span>			<span id="hierarchy-info-SIC"></span></div>
 						<div><span class="info-header">LastUpdate:</span>	<span id="hierarchy-info-lastUpdate"></span></div>
 						<div><span class="info-header">Completeness:</span>	<span id="hierarchy-info-completeness"></span></div>
-						<div><span class="info-header">HierarchyLevel:</span><span id="hierarchy-info-hierarchy"></span></div>
+						<div><span class="info-header">HierarchyLevel:</span> <span id="hierarchy-info-hierarchy"></span></div>
 					</div>
 				</div>
 			</div>
@@ -80,74 +80,90 @@
 		<div id="summary-container" class="container">
 			<div id="company-container">
 				<div>
-					<span id="company-name">Ingersoll Rand</span>
+					<span id="company-name"></span>
 				</div>
 				<div id="source-info-container">
 					<span class="source-info">collected based on </span>
-					<span id="company-source-count" class="source-info">665</span>
+					<span id="company-source-count" class="source-info"></span>
 					<span class="source-info"> global ultimates</span>
 				</div>
 			</div>
-			<span class="section-title">Global Parents:</span>
+			<span class="section-title">Global Parents: </span>
 			<div id="global-parents-container">
 				<table id="global-parents-table" class="table table-striped table-bordered" cellspacing="0" width="100%">
 					<thead></thead>
 					<tbody></tbody>
 				</table>
 			</div>
-			<span class="section-title">Statistics:</span>
+			<span class="section-title">Statistics: </span>
 			<div id="stats-container">
-				<div id="total-stats-container" class="col-sm-4">
+				<div id="total-stats-container" class="col-sm-6">
 					<div class="col-sm-5">
 						<div id="entity-count-info" class="side-stats-info">
-							<span class="info-title"># Roots & Subsidiaries:</span>
-							<span class="side-info">163</span>
+							<span class="info-title"># Roots & Subsidiaries: </span>
+							<span id="non-branch-count" class="side-info"></span>
 						</div>
 						<div id="branch-count-info" class="side-stats-info">
-							<span class="info-title"># Branches:</span>
-							<span class="side-info">502</span>
+							<span class="info-title"># Branches: </span>
+							<span id="branch-count" class="side-info"></span>
 						</div>
 					</div>
 					<div id="total-count-info" class="col-sm-7">
-						<span class="info-title"># Total Entities:</span>
-						<span class="total-count">665</span>
+						<span class="info-title"># Total Entities: </span>
+						<span id="total-count"></span>
 					</div>
 				</div>
-				<div id="in-tree-stats-container" class="col-sm-4">
-					<div class="col-sm-3"></div>
-					<div class="col-sm-9">
-						<div class="detail-stats-info">
-							<span class="info-title"># Root Entities:</span>
-							<span class="side-info">23</span>
+				<div id="in-tree-stats-container" class="col-sm-3">
+					<div class="col-sm-5 demo-img">
+						<img src="/static/css/images/intree.png">
+					</div>
+					<div class="col-sm-4">
+						<div class="detail-stats-info detail-stats-border">
+							<span class="info-title"># Root Entities </span>
 						</div>
 						<div class="detail-stats-info">
-							<span class="info-title"># In-Tree Entities:</span>
-							<span class="side-info">53</span>
+							<span class="info-title"># In-Tree (Roots & children)</span>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<div class="detail-stats-info detail-stats-border">
+							<span id="root-count" class="side-info"></span>
+						</div>
+						<div class="detail-stats-info">
+							<span id="in-tree-count" class="side-info"></span>
 						</div>
 					</div>
 				</div>
-				<div id="out-tree-stats-container" class="col-sm-4">
-					<div class="col-sm-3"></div>
-					<div class="col-sm-9">
-						<div class="detail-stats-info">
-							<span class="info-title"># Parent-not-in-Dataset Entities:</span>
-							<span class="side-info">8</span>
+				<div id="out-tree-stats-container" class="col-sm-3">
+					<div class="col-sm-5 demo-img">
+						<img src="/static/css/images/outtree.png">
+					</div>
+					<div class="col-sm-4">
+						<div class="detail-stats-info detail-stats-border">
+							<span class="info-title"># Parent-not-in-Dataset Entities </span>
 						</div>
 						<div class="detail-stats-info">
-							<span class="info-title"># Out-Tree Entities:</span>
-							<span class="side-info">612</span>							
+							<span class="info-title"># Out-Tree (PNIDs & children)</span>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<div class="detail-stats-info detail-stats-border">
+							<span id="pnid-count" class="side-info"></span>
+						</div>
+						<div class="detail-stats-info">
+							<span id="out-tree-count" class="side-info"></span>
 						</div>
 					</div>
 				</div>
 			</div>
-			<span class="section-title">Parent-not-in-Database Entities:</span>
+			<span class="section-title">Parent-not-in-Database Entities: </span>
 			<div id="pnid-entities-container">
 				<table id="pnid-entities-table" class="table table-striped table-bordered" cellspacing="0" width="100%">
 					<thead></thead>
 					<tbody></tbody>
 				</table>
 			</div>
-			<span class="section-title">Meta Data:</span>
+			<span class="section-title">Meta Data: </span>
 			<div id="metadata-container">
 				<table id="metadata-table" class="table table-striped table-bordered" cellspacing="0" width="100%">
 					<thead></thead>
@@ -155,8 +171,6 @@
 				</table>
 			</div>
 		</div>
-
-
 
 		<script type="text/javascript" src="/static/scripts/config.js"></script>
 		<script type="text/javascript" src="/static/scripts/hierarchy_view.js"></script>

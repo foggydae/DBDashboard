@@ -1,3 +1,6 @@
+'use strict';
+
+// global variables for map view
 var map;
 var marker_dict, maxValue;
 var entities, branches, controller, baseMaps;
