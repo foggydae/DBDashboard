@@ -51,7 +51,101 @@
 			<div class="col-sm-6 full-height no-rt-pd container row">
 				<div id="third-container">
 					<div class="col-sm-4 full-height">
-						<div id="search-container" class="view-container">search view</div>
+						<div id="search-container" class="view-container">
+							<form id="filter-form" action="/api/filter" method="GET">
+								<div>
+									<label class="sr-only" for="inlineFormInput">Name</label>
+									<input class="form-control mb-2" id="inlineFormInput" type="text" name="keyword" placeholder="Default input">
+								</div>
+								<button type="submit" class="btn btn-outline-primary btn-block">Seach</button>
+								<div id="form-check-container">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+										<label class="form-check-label" for="defaultCheck1">
+											Advertising agencies, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck2">
+										<label class="form-check-label" for="defaultCheck2">
+											Air transportation, scheduled, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck3">
+										<label class="form-check-label" for="defaultCheck3">
+											Aircraft engines and engine parts
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck4">
+										<label class="form-check-label" for="defaultCheck4">
+											Aircraft parts and equipment, nec, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck5">
+										<label class="form-check-label" for="defaultCheck5">
+											Aircraft, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck6">
+										<label class="form-check-label" for="defaultCheck6">
+											Airports, flying fields, and services
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck7">
+										<label class="form-check-label" for="defaultCheck7">
+											Architectural metalwork
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck8">
+										<label class="form-check-label" for="defaultCheck8">
+											Auto and home supply stores, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck9">
+										<label class="form-check-label" for="defaultCheck9">
+											Automobiles and other motor vehicles, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck10">
+										<label class="form-check-label" for="defaultCheck10">
+											Automotive repair shops, nec
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck11">
+										<label class="form-check-label" for="defaultCheck11">
+											Automotive services, nec, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck11">
+										<label class="form-check-label" for="defaultCheck11">
+											Bank holding companies
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck11">
+										<label class="form-check-label" for="defaultCheck11">
+											Blast furnaces and steel mills, nsk
+										</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox" value="" id="defaultCheck11">
+										<label class="form-check-label" for="defaultCheck11">
+											Blowers and fans
+										</label>
+									</div>
+								</div>
+							</form>
+						</div>
 					</div>
 					<div class="col-sm-8 full-height">
 						<div id="tornado-container" class="view-container">tornado view</div>
@@ -71,7 +165,34 @@
 						</div>
 					</div>
 					<div class="col-sm-3 full-height">
-						<div id="stat-container" class="view-container">stat view</div>
+						<div id="stat-container" class="view-container">
+							<h6>Eaton-gps.csv</h6>
+							<div class="stats-sub-info">
+								<span><strong># Entities: </strong>965</span>
+								<span>- Roots & Subsidiaries: 286</span>
+								<span>- Branches: 679</span>
+							</div>
+							<div class="stats-sub-info">
+								<span><strong># Roots: </strong>1</span>
+								<span>- In-tree Entities: 927</span>
+							</div>
+							<div class="stats-sub-info">
+								<span><strong># PNID Entities: </strong>23</span>
+								<span>- Out-tree Entities: 38</span>
+							</div>
+							<div class="stats-sub-info">
+								<span>Max Hierarchy: 11</span>
+							</div>
+							<div class="stats-sub-info">
+								<span><strong># Global Ultimate: </strong>1</span>
+								<span>Missing G-Ultimate: 0</span>
+								<span>Revenue: $20,855MM</span>
+								<span># Emp.: 97,000</span>
+							</div>
+							<div>
+								<button id="summary-button-2" class="btn btn-outline-primary btn-block">Summary</button>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
