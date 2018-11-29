@@ -1,6 +1,6 @@
 # D&B Database Dashboard
 
-#### Current Progress:
+#### Current Stable Version:
 
 ![ScreenShot](./images/screenshot.png)
 
