@@ -8,6 +8,7 @@ from geopy.geocoders import DataBC
 from pprint import pprint
 
 import json
+import math
 
 
 class EntityModel():
@@ -30,13 +31,17 @@ class EntityModel():
 
         self.company_df = pd.read_csv(file, dtype=str)
         self.company_df.fillna("", inplace=True)
+        print("shape:", self.company_df.shape)
         size_quantiles = self.company_df['EMPLOYEES_HERE'].astype(int).quantile(np.linspace(0.1,1,10)).values
 
         def _get_quantile(employee_num):
             return np.argmax((size_quantiles - int(employee_num)) > 0) + 1
 
         max_employees_here = self.company_df['EMPLOYEES_HERE'].astype(float).max()
-        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
+        # self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
+        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:math.sqrt(math.sqrt(float(x))) * 1.5 + 3) # scale number of employee to size
+
+
 
         self.max_level = 0
         self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
@@ -63,7 +68,7 @@ class EntityModel():
 		'''
         global_ultimates = {}
         roots = set()
-        feature_included = {'id', 'name', 'size', 'sizeTotal', 'revenue', 'lastUpdate', 'revenue', 'address', 'LOB',
+        feature_included = {'id', 'name', 'size', 'sizeTotal', 'empNum', 'revenue', 'lastUpdate', 'address', 'LOB',
                             'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'location', 'level'}
         entity_dict = {}
         # geolocator = DataBC()
@@ -74,8 +79,8 @@ class EntityModel():
             entity_dict[cur_id]['id'] = cur_id
             entity_dict[cur_id]['name'] = row["CASE_NAME"]
             entity_dict[cur_id]['size'] = row["size"]
+            entity_dict[cur_id]['empNum'] = row["EMPLOYEES_HERE"]
             entity_dict[cur_id]['sizeTotal'] = row["EMPLOYEES_TOTAL"]
-            entity_dict[cur_id]['revenue'] = row["SALES_US"]
             entity_dict[cur_id]['lastUpdate'] = row["REPORT_DATE"]
             entity_dict[cur_id]['revenue'] = row["SALES_US"]
             entity_dict[cur_id]['address'] = row["CASE_ADDRESS1"]
@@ -244,10 +249,9 @@ class EntityModel():
                         # add parent relation with the virtual node
                         family_dict[cur_entity]["parent"] = cur_parent
                         family_dict[cur_parent]["children"].add(cur_entity)
+                        # currently, no matter whether domestic can be used as parent or not, label this node as "parent-not-in-dataset entity"
+                        no_parent_set.add(cur_entity)
 
-                    # currently, no matter whether domestic can be used as parent or not, label this node as "parent-not-in-dataset entity"
-                    no_parent_set.add(cur_entity)
-                    family_dict[cur_entity]["parent"] = cur_parent
             # normal entity. update the entity's parent info and the entity's parent's children info
             else:
                 family_dict[cur_entity]["parent"] = cur_parent
@@ -338,13 +342,13 @@ class EntityModel():
             missing_parents.add(self.entity_dict[tmp_root]["parent"])
 
         if self.verbose:
-            print("{:55s} | {:6s} | {:6s} | {:6s} | {:10s} | {}".format(
-                "ENTITY_NAME", "STATUS", "SUBSID", "HIERAC", "TYPE", "CHILDREN_NUM"
+            print("{:55s} | {:6s} | {:10s} | {}".format(
+                "ENTITY_NAME", "HIERAC", "TYPE", "CHILDREN_NUM"
             ))
 
             for info in sorted(no_parent_info, key=lambda row: row[1]):
-                print("{:55s} | {:6s} | {:6s} | {:6s} | {:10s} | {:4s}".format(
-                    info[0], info[1], info[2], info[3], info[4], info[5]
+                print("{:55s} | {:6s} | {:10s} | {:4s}".format(
+                    info[0], info[1], info[2], info[3]
                 ))
 
         return no_parent_tree_size, missing_parents
@@ -453,6 +457,8 @@ class EntityModel():
         siblings['distance'] = siblings.apply(_cal_dist, axis=1)
         nearest_10_siblings = siblings.sort_values('distance')[:max_num]
 
+        print(nearest_10_siblings[["CASE_DUNS", "CASE_NAME", "SALES_US"]])
+
         # change from df to dict
         _, _, _, nearest_10_siblings = self._get_entity_dict(nearest_10_siblings)
 
@@ -460,18 +466,23 @@ class EntityModel():
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Ingersoll_Rand_gps"
+    company_name = "Eaton_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
-    message = {
-        "count_dict": entity_model.get_data_stats(verbose=True),
-        "pnid_list": entity_model.get_pnid_list(),
-        "global_ultimate_list": entity_model.get_global_ultimates(),
-        "metadata_list": entity_model.get_metadata()
-        # "filename": cur_file_name
-    }
-    pprint(json.dumps(message))
+    # entity_model.get_data_stats(verbose=True)
+
+
+    pprint(entity_model.find_siblings("00602755428", digits=2, max_num=40))
+
+    # message = {
+    #     "count_dict": entity_model.get_data_stats(verbose=True),
+    #     "pnid_list": entity_model.get_pnid_list(),
+    #     "global_ultimate_list": entity_model.get_global_ultimates(),
+    #     "metadata_list": entity_model.get_metadata()
+    #     # "filename": cur_file_name
+    # }
+    # pprint(json.dumps(message))
     # entity_model.get_json_tree(ignore_branches=False)
     # print(entity_model.find_siblings('00989222823'))
     # entity_model.get_data_stats(ignore_branches=False)

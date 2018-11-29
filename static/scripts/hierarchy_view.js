@@ -2,7 +2,7 @@
 /* implemented based on Rob Schmuecker's DNDTree Demo */
 
 // global variables for hierarchy view
-var maxLabelLength, maxValue, duration, root, idNodeDict;
+var maxLabelLength, maxValue, duration, idNodeDict;
 var diagonal, treeLayout;
 var zoomListener, baseSvg, svgGroup;
 
@@ -247,7 +247,8 @@ var center_node = function (source) {
     var scale = zoomListener.scale();
     var x = -source.y0;
     var y = -source.x0;
-    x = x * scale + baseSvg.attr("width") / 2;
+    // x = x * scale + baseSvg.attr("width") / 2;
+    x = x * scale + 20;
     y = y * scale + baseSvg.attr("height") / 2;
     d3.select('g').transition()
         .duration(duration)
@@ -281,11 +282,12 @@ var _mouseover = function (d) {
     $("#hierarchy-info-lastUpdate").html(d.lastUpdate);
     $("#hierarchy-info-completeness").html(d.Completeness);
     $("#hierarchy-info-hierarchy").html(d.level);
+    $("#hierarchy-info-revenue").html(d.revenue);
     $("#hierarchy-info").css("display", "unset");
 }
 
 var _mouseout = function (d) {
-    $("#hierarchy-info").css("display", "none");
+    // $("#hierarchy-info").css("display", "none");
 }
 
 // Toggle children on click.
