@@ -358,6 +358,16 @@ class EntityModel():
             tree_size.append(len(entity_in_tree))
         return tree_size
 
+    def count_subs_branches(self, node_duns):
+        sub_tree_set = set()
+        self._traverse_tree(self.family_dict, node_duns, sub_tree_set)
+        num_branches = 0
+        print(sub_tree_set)
+        for entity_duns in sub_tree_set:
+            if self.entity_dict[entity_duns]["type"] == "branch":
+                num_branches += 1
+        return num_branches, len(sub_tree_set) - num_branches
+
     def get_json_tree(self, ignore_branches=False):
         if ignore_branches:
             family_dict, _, _ = \
@@ -463,10 +473,11 @@ class EntityModel():
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Eaton_gps"
+    company_name = "Ingersoll_Rand_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
+    print(entity_model.count_subs_branches("00001368026"))
     # entity_model.get_data_stats(verbose=True)
 
 
