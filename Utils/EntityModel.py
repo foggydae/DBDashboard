@@ -1,11 +1,8 @@
-from functools import partial
-
 import pandas as pd
 import numpy as np
 from collections import defaultdict
 from geopy import distance
 from geopy.geocoders import DataBC
-from pprint import pprint
 
 import json
 import math
@@ -473,7 +470,7 @@ if __name__ == '__main__':
     # entity_model.get_data_stats(verbose=True)
 
 
-    pprint(entity_model.find_siblings("00602755428", digits=2, max_num=40))
+    # pprint(entity_model.find_siblings("00602755428", digits=2, max_num=40))
 
     # message = {
     #     "count_dict": entity_model.get_data_stats(verbose=True),
