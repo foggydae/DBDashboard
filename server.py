@@ -69,5 +69,14 @@ def get_summary_data():
         return "NO_DATA"
 
 
+@app.route("/api/get_SIC_sibling/<message>", methods=["GET"])
+def get_SIC_sibling(message):
+    message_dict = json.loads(message)
+    selected_duns = message_dict["selected_duns"]
+    try:
+        return json.dumps(entity_model.find_siblings(selected_duns))
+    except:
+        return "NO_DATA"
+
 if __name__ == "__main__":
     app.run(debug=True)

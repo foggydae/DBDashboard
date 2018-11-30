@@ -314,6 +314,7 @@ var _click_name = function (d) {
     $(".selectedText").removeClass('selectedText');
     $(this).addClass('selectedText');
     update_map_view(d.id);
+    update_tornado_view(d.id);
 }
 
 var _get_node_opacity = function (d) {

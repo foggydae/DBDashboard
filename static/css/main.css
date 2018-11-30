@@ -81,8 +81,6 @@ body {
 	height: 100%;
 	width: 100%;
     box-shadow: 1px 1px 3px #999;
-	padding: 5px;
-    overflow-y: scroll;
 }
 
 #map-container {
@@ -143,6 +141,11 @@ body {
 	font-weight: 900;
 }
 
+#search-container,
+#stat-container {
+	padding: 5px;
+    overflow-y: scroll;	
+}
 
 .stats-sub-info {
     display: flex;
@@ -164,6 +167,73 @@ body {
 	overflow-y: scroll;
 	font-size: 12px;
 	border-top: solid 1px #ccc;
+}
+
+/**********************/
+/**** Tornado View ****/
+/**********************/
+
+#tornado-head-container {
+	height: 50px;
+	box-shadow: 0px 3px 3px #aaa;
+	width: 100%;
+}
+
+#tornado-body-container {
+	overflow-y: scroll;
+	width: 100%;
+	margin-top: 5px;
+}
+
+.tornado-base-container {
+	width: 100%;
+	display: flex;
+}
+
+.tornado-siblings {
+	padding-top: 2px;
+	padding-bottom: 2px; 
+	border-top: solid 1px #ddd;
+}
+
+.tornado-name {
+	display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-weight: 600;
+	font-size: 12px;
+	box-shadow: 2px 0px 3px #ccc;
+}
+
+.tornado-bar {
+	box-shadow: 0px 1px 3px #ccc;
+}
+
+.tornado-bar-revenue {
+	fill: #255a9c;
+}
+
+.tornado-bar-empNum {
+	fill: #cc5806;
+}
+
+.tornado-subsidiary {
+	background: #4682b440;
+}
+
+.tornado-branch {
+	background: #8fbc8f66;
+}
+
+.tornado-root {
+	background: #92675761;
+}
+
+.tornado-chart-text {
+	font-size: 12px;
+	font-weight: 600;
+	fill: #fff;
+	text-shadow: 1px 1px 3px #000;
 }
 
 /**********************/

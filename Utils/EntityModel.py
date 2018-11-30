@@ -3,6 +3,7 @@ import numpy as np
 from collections import defaultdict
 from geopy import distance
 from geopy.geocoders import DataBC
+from pprint import pprint
 
 import json
 import math
@@ -36,7 +37,7 @@ class EntityModel():
 
         max_employees_here = self.company_df['EMPLOYEES_HERE'].astype(float).max()
         # self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
-        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:math.sqrt(math.sqrt(float(x))) * 1.5 + 3) # scale number of employee to size
+        self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:math.sqrt(math.sqrt(float(x))) * 1.8 + 3) # scale number of employee to size
 
 
 
@@ -362,7 +363,6 @@ class EntityModel():
         sub_tree_set = set()
         self._traverse_tree(self.family_dict, node_duns, sub_tree_set)
         num_branches = 0
-        print(sub_tree_set)
         for entity_duns in sub_tree_set:
             if self.entity_dict[entity_duns]["type"] == "branch":
                 num_branches += 1
@@ -430,7 +430,10 @@ class EntityModel():
             self._traverse_tree(self.family_dict, node=case_duns, entity_in_tree=entities)
             return {entity: self.entity_dict[entity] for entity in entities}
 
-    def find_siblings(self, case_duns, digits=4, logic='OR', max_num=10):
+    def find_siblings(self, case_duns, digits=2, logic='OR', max_num=20):
+        if case_duns == "INIT":
+            case_duns = self.roots[0];
+
         company_df = self.company_df
         entity = self.entity_dict[case_duns]
         lat1 = float(entity['latitude'])
@@ -462,26 +465,24 @@ class EntityModel():
 
         # sort result (by distance asc)
         siblings['distance'] = siblings.apply(_cal_dist, axis=1)
-        nearest_10_siblings = siblings.sort_values('distance')[:max_num]
+        nearest_siblings = siblings.sort_values('distance')[:max_num]
 
-        print(nearest_10_siblings[["CASE_DUNS", "CASE_NAME", "SALES_US"]])
+        siblings_list = [self.entity_dict[row["CASE_DUNS"]] for _, row in nearest_siblings.iterrows() if row["CASE_DUNS"] != case_duns]
+        siblings_list = [self.entity_dict[case_duns]] + siblings_list
 
-        # change from df to dict
-        _, _, _, nearest_10_siblings = self._get_entity_dict(nearest_10_siblings)
-
-        return nearest_10_siblings
+        return siblings_list
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
-    company_name = "Ingersoll_Rand_gps"
+    company_name = "Eaton_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
-    print(entity_model.count_subs_branches("00001368026"))
+    # print(entity_model.count_subs_branches("00001368026"))
     # entity_model.get_data_stats(verbose=True)
 
 
-    # pprint(entity_model.find_siblings("00602755428", digits=2, max_num=40))
+    print(entity_model.find_siblings("00602755428", digits=2, max_num=40))
 
     # message = {
     #     "count_dict": entity_model.get_data_stats(verbose=True),
