@@ -10,8 +10,9 @@ var cur_tornado_data;
 
 init_hierarchy_view();
 init_map_view();
-init_summary_view();
 init_tornado_view();
+init_stat_view();
+init_summary_view();
 
 // additional listener for size-responsiblility of certain views
 $(window).resize(function () { 

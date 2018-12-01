@@ -20,7 +20,8 @@ var init_map_view = function () {
 	};
 
 	// put map to map-canvas
-	map = L.map("map-canvas").setView([39.8283, -98.5795], 4);
+	// map = L.map("map-canvas").setView([39.8283, -98.5795], 4);
+	map = L.map("map-canvas").setView([10, 0], 1);
 	// load the map
 	baseMapLayer_light.addTo(map);
 
@@ -111,6 +112,7 @@ var update_map_view = function (duns) {
 			console.log("Error", "Failed in map data.");
 		} else {
 			var map_data = JSON.parse(rtn_string);
+			console.log(map_data);
 			var new_layers = get_entity_group(map_data);
 			entities.remove();
 			branches.remove();
@@ -127,6 +129,7 @@ var update_map_view = function (duns) {
 			};
 			controller = L.control.layers(baseMaps, overlayMaps);
 			controller.addTo(map);
+			map.setView([+map_data[duns]["latitude"], +map_data[duns]["longitude"]], 2);
 		}
 	});
 
