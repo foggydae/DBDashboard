@@ -45,18 +45,11 @@ def get_map_data(message):
 
 @app.route("/api/get_summary_data", methods=["GET"])
 def get_summary_data():
-    # global entity_model, cur_file_name
-    print("filename: ", cur_file_name)
     try:
-        print("count_dict")
         count_dict = entity_model.get_data_stats(verbose=False)
-        print("pnid_list")
         pnid_list = entity_model.get_pnid_list()
-        print("global_ultimate_list")
         global_ultimate_list = entity_model.get_global_ultimates()
-        print("metadata_list")
         metadata_list = entity_model.get_metadata()
-        print("done")
         result = {
             "count_dict": count_dict,
             "pnid_list": pnid_list,
@@ -77,6 +70,17 @@ def get_SIC_sibling(message):
         return json.dumps(entity_model.find_siblings(selected_duns))
     except:
         return "NO_DATA"
+
+
+@app.route("/api/get_stat_data", methods=["GET"])
+def get_stat_data():
+    try:
+        result = entity_model.get_data_stats(verbose=False)
+        result["filename"] = cur_file_name
+        return json.dumps(result)
+    except:
+        return "NO_DATA"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
