@@ -382,6 +382,15 @@ class EntityModel():
         tree_size = self._count_roots()
         no_parent_tree_size, missing_parents = self._count_pnids()
 
+        root_revenue = 0
+        root_emp = 0
+        for tmp_root in self.roots:
+            root_revenue += int(self.entity_dict[tmp_root]["revenue"])
+            root_emp += int(self.entity_dict[tmp_root]["sizeTotal"])
+
+        missing_ultimates = set(self.global_ultimates.keys()) - set(self.roots)
+
+
         if verbose:
             print("# of All Entity:", len(self.entity_dict), "| # of Non-Branch Entity:",
                   len(self.entity_dict) - self.branches_cnt)
@@ -391,6 +400,9 @@ class EntityModel():
             print("Parent-Not-In-Dataset Entity:", len(self.no_parent_set),
                   "(Missing Parents: " + str(len(missing_parents)) + ")")
             print("Out-Tree Entity (Ultimately reports to one of the Missing Parents):", np.sum(no_parent_tree_size))
+            print("Max Hierarchy:", self.max_level)
+            print("root total revenue:", root_revenue)
+            print("root total employee:", root_emp)
 
         tree_count = {
             "total": len(self.entity_dict),
@@ -399,20 +411,30 @@ class EntityModel():
             "root": len(self.roots),
             "in_tree": int(np.sum(tree_size)),
             "pnid": len(self.no_parent_set),
-            "out_tree": int(np.sum(no_parent_tree_size))
+            "out_tree": int(np.sum(no_parent_tree_size)),
+            "max_hierarchy": self.max_level,
+            "global_ultimates": len(self.global_ultimates),
+            "missing_ultimates": len(missing_ultimates),
+            "root_revenue": root_revenue,
+            "root_emp": root_emp
         }
         return tree_count
+
 
     def get_pnid_list(self):
         return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]} 
                 for duns in self.no_parent_set]
 
+
     def get_global_ultimates(self):
-        return [{duns:{"value":self.global_ultimates[duns]["name"],"status":self._highlight_rules(duns, "name")} for duns in self.global_ultimates}]
+        return [{duns:{"value":self.global_ultimates[duns]["name"],"status":self._highlight_rules(duns, "name")} 
+            for duns in self.global_ultimates}]
+
 
     def get_metadata(self):
         return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]}
                 for duns in self.entity_dict]
+
 
     def get_gps(self, case_duns='ALL'):
         """
@@ -430,6 +452,7 @@ class EntityModel():
             self._traverse_tree(self.family_dict, node=case_duns, entity_in_tree=entities)
             return {entity: self.entity_dict[entity] for entity in entities}
 
+
     def find_siblings(self, case_duns, digits=2, logic='OR', max_num=20):
         if case_duns == "INIT":
             case_duns = self.roots[0];
@@ -444,7 +467,11 @@ class EntityModel():
             return sics == combined_sics
 
         def _cal_dist(row):
-            lat2, lon2 = float(row['latitude']), float(row['longitude'])
+            try:
+                lat2, lon2 = float(row['latitude']), float(row['longitude'])
+            except:
+                lat2 = 0
+                lon2 = 0
             return distance.distance((lat1, lon1), (lat2,lon2))
 
         sics = entity['SIC'].split(sep=', ')
@@ -472,6 +499,8 @@ class EntityModel():
 
         return siblings_list
 
+
+
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
     company_name = "Eaton_gps"
@@ -482,7 +511,7 @@ if __name__ == '__main__':
     # entity_model.get_data_stats(verbose=True)
 
 
-    print(entity_model.find_siblings("00602755428", digits=2, max_num=40))
+    print(entity_model.find_siblings("00896331972", digits=2, max_num=40))
 
     # message = {
     #     "count_dict": entity_model.get_data_stats(verbose=True),
