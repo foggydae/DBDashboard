@@ -44,7 +44,9 @@ var init_map_view = function () {
 			entities = new_layers[0];
 			branches = new_layers[1];
 			entities.addTo(map);
-			branches.addTo(map);
+			if (!cur_ignore_branch_flag) {
+				branches.addTo(map);
+			}
 
 			var overlayMaps = {
 			    "entities": entities,
@@ -84,8 +86,9 @@ var init_marker_dict = function (map_data) {
 				this.closePopup();
 			})
 			.on("click", function(d) {
-				center_node(d.target.options.id);
-			});
+				center_node(d.target.options.id, true);
+			}
+		);
 	}
 }
 
@@ -112,7 +115,6 @@ var update_map_view = function (duns) {
 			console.log("Error", "Failed in map data.");
 		} else {
 			var map_data = JSON.parse(rtn_string);
-			console.log(map_data);
 			var new_layers = get_entity_group(map_data);
 			entities.remove();
 			branches.remove();
@@ -121,7 +123,9 @@ var update_map_view = function (duns) {
 			entities = new_layers[0];
 			branches = new_layers[1];
 			entities.addTo(map);
-			branches.addTo(map);
+			if (!cur_ignore_branch_flag) {
+				branches.addTo(map);
+			}
 
 			var overlayMaps = {
 			    "entities": entities,
@@ -129,7 +133,11 @@ var update_map_view = function (duns) {
 			};
 			controller = L.control.layers(baseMaps, overlayMaps);
 			controller.addTo(map);
-			map.setView([+map_data[duns]["latitude"], +map_data[duns]["longitude"]], 2);
+			if (duns != "ALL") {
+				map.setView([+map_data[duns]["latitude"], +map_data[duns]["longitude"]], 2);				
+			} else {
+				map.setView([10, 0], 1);				
+			}
 		}
 	});
 

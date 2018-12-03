@@ -1,6 +1,7 @@
 /**********************/
 /* Override Bootstrap */
 /**********************/
+
 .container{
 	width: 100%;
 	max-width: 100%;
@@ -31,6 +32,11 @@
 /** Customized Style **/
 /**********************/
 
+body {
+  padding-top: 50px;
+  height: 100%;
+}
+
 #summary-button {
 	margin-right: 10px;
 }
@@ -44,12 +50,6 @@
 
 .submit-btn {
 	font-size: 13px;
-}
-
-
-body {
-  padding-top: 50px;
-  height: 100%;
 }
 
 #main-container {
@@ -93,23 +93,15 @@ body {
 	height: 100%;
 }
 
-.detail-info {
-	padding-left: 5px;
-	padding-right: 5px;
-    max-width: 350px;
-    margin-top: 5px;
-    margin-left: 5px;
-    position: absolute;
-    background-color: #fff;
-    opacity: 0.9;
-    box-shadow: 1px 1px 3px #ccc;
-    font-size: 12px;
-    display: none;
-}
-
 .info-header {
 	font-weight: 900;
 	width: 20px;
+}
+
+#search-container,
+#stat-container {
+	padding: 5px;
+    overflow-y: scroll;	
 }
 
 /**********************/
@@ -137,14 +129,14 @@ body {
     stroke-width: 1.5px;
 }
 
-.selectedText {
+.selected-text {
 	font-weight: 900;
+	font-size: 16px !important;
 }
 
-#search-container,
-#stat-container {
-	padding: 5px;
-    overflow-y: scroll;	
+.highlight-text {
+	font-weight: 600;
+	fill: indianred;
 }
 
 .stats-sub-info {
@@ -155,6 +147,41 @@ body {
     font-size: 14;
 	padding: 5px;
 }
+
+#hierarchy-sub-container {
+    position: absolute;
+    padding-top: 15px;
+    padding-left: 15px;
+    padding-right: 25px;
+    width: 100%;
+    pointer-events: none;
+/*    display: flex;
+	align-items: end;
+    justify-content: space-between;*/
+}
+
+#hierarchy-info {
+	padding-left: 5px;
+	padding-right: 5px;
+    max-width: 350px;
+    background-color: #fff;
+    opacity: 0.9;
+    box-shadow: 1px 1px 3px #ccc;
+    font-size: 12px;
+    pointer-events: visible;
+    display: none;
+}
+
+#hierarchy-control {
+	pointer-events: visible;
+    box-shadow: 1px 1px 3px #ccc;
+	opacity: 0.9;
+	float: right;
+}
+
+/**********************/
+/***** Search View ****/
+/**********************/
 
 #filter-form {
 	height: 100%;

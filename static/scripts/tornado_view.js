@@ -72,13 +72,16 @@ var draw_tornado_name = function (data, index) {
 	if (index == 0) {
 		selector = "#tornado-head-name";
 	}
+	$(selector).off("click");
 	$(selector).html(data["name"])
-		.on("click", function () {
-			console.log(data["id"]);
-		});
+		.css("cursor", "click");
 	$(selector + "-div")
 		.removeClass("tornado-branch tornado-root tornado-subsidiary")
-		.addClass("tornado-" + data["type"]);
+		.addClass("tornado-" + data["type"])
+		.on("click", function () {
+			center_node(data["id"], true);
+			// console.log(data["id"]);
+		});
 }
 
 
@@ -134,7 +137,7 @@ var draw_tornado_chart = function (divID, data, y_scale, rev_scale, emp_scale, h
 		})
 		.attr("height", 30)
 		.on("click", function (d) {
-			console.log(d.id);
+			center_node(data["id"], true);
 		});
 
 	tornado_svg.enter()
@@ -164,5 +167,8 @@ var draw_tornado_chart = function (divID, data, y_scale, rev_scale, emp_scale, h
 			} else {
 				return number.toLocaleString();
 			}
+		})
+		.on("click", function (d) {
+			center_node(data["id"], true);
 		});
 }

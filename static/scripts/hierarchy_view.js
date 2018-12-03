@@ -5,6 +5,7 @@
 var maxLabelLength, maxValue, duration, idNodeDict;
 var diagonal, treeLayout;
 var zoomListener, baseSvg, svgGroup;
+var defaultCenter = null;
 
 var init_hierarchy_view = function () {
     maxLabelLength = 0; 
@@ -33,10 +34,11 @@ var init_hierarchy_view = function () {
     // Append a group which holds all nodes and which the zoom Listener can act upon.
     svgGroup = baseSvg.append("g");
 
-    load_hierarchy_view(HIERARCHY_IGNORE_BRANCHES);
+    _init_hierarchy_control();
+    _load_hierarchy_view(cur_ignore_branch_flag, true);
 }
 
-var load_hierarchy_view = function (ignore_branches=true) {
+var _load_hierarchy_view = function (ignore_branches=true, centering=false) {
     var message = JSON.stringify({
         ignore_branches: ignore_branches
     });
@@ -50,10 +52,13 @@ var load_hierarchy_view = function (ignore_branches=true) {
             _visit(treeData);
             // Define the root
             root = treeData;
-            console.log(root);
+            if (defaultCenter == null || typeof defaultCenter != "string") {
+                defaultCenter = root["children"][0];
+            }
             update_hierarchy_view(root);
-            // Layout the tree initially and center on the root node.
-            center_node(root["children"][0]);
+            if (centering) {
+                center_node(defaultCenter, false);
+            }
         }
     });
 }
@@ -119,13 +124,16 @@ var update_hierarchy_view = function (source) {
 
     nodeEnter.append("circle")
         .attr('class', 'nodeCircle')
+        .attr("id", function(d) {
+            return "circle" + d.id;
+        })
         .attr("r", 0)
         .style("stroke", _get_node_color)
         .style("fill", _get_node_color)
         .style("fill-opacity", _get_node_opacity)
         .on("mouseover", _mouseover)
         .on("mouseout", _mouseout)
-        .on('click', _click_node);            
+        .on('click', _click_node);
 
     nodeEnter.append("text")
         .attr("x", function(d) {
@@ -134,6 +142,9 @@ var update_hierarchy_view = function (source) {
         })
         .attr("dy", ".35em")
         .attr('class', 'nodeText')
+        .attr("id", function(d) {
+            return "text" + d.id;
+        })
         .attr("text-anchor", function(d) {
             return "start";
             // return d.children || d._children ? "end" : "start";
@@ -240,21 +251,72 @@ var update_hierarchy_view = function (source) {
 }
 
 // Function to center node when clicked/dropped so node doesn't get lost when collapsing/moving with large amount of children.
-var center_node = function (source) {
+var center_node = function (source, with_highlight) {
     if (typeof source == "string") {
         source = idNodeDict[source];
     }
     var scale = zoomListener.scale();
     var x = -source.y0;
     var y = -source.x0;
-    // x = x * scale + baseSvg.attr("width") / 2;
-    x = x * scale + 20;
+    if (with_highlight) {
+        x = x * scale + baseSvg.attr("width") / 2;
+        highlight_node(source.id);
+    } else {
+        x = x * scale + 20;
+    }
     y = y * scale + baseSvg.attr("height") / 2;
     d3.select('g').transition()
         .duration(duration)
         .attr("transform", "translate(" + x + "," + y + ")scale(" + scale + ")");
     zoomListener.scale(scale);
     zoomListener.translate([x, y]);
+}
+
+var highlight_node = function (duns_id) {
+    $(".highlight-text").removeClass("highlight-text");
+    $("#text" + duns_id).addClass("highlight-text");
+    update_hierarchy_info(idNodeDict[duns_id]);
+}
+
+var update_hierarchy_info = function (d) {
+    $("#hierarchy-info-name").html(d.name);
+    $("#hierarchy-info-location").html(d.location);
+    $("#hierarchy-info-address").html(d.address);
+    $("#hierarchy-info-SIC").html(d.SIC);
+    $("#hierarchy-info-lastUpdate").html(d.lastUpdate);
+    $("#hierarchy-info-completeness").html(d.Completeness);
+    $("#hierarchy-info-hierarchy").html(d.level);
+    $("#hierarchy-info-revenue").html(d.revenue);
+    $("#hierarchy-info").css("display", "inline-block");
+}
+
+var _init_hierarchy_control = function () {
+    if (cur_ignore_branch_flag) {
+        $("#hierarchy-branch-btn").html("Branches");
+    } else {
+        $("#hierarchy-branch-btn").html("NoBranch");
+    }
+
+    $("#hierarchy-unselect-btn").on("click", function () {
+        defaultCenter = root["children"][0];
+        $(".highlight-text").removeClass("highlight-text");
+        $(".selected-text").removeClass("selected-text");
+        update_map_view("ALL");
+        center_node(defaultCenter, false);
+        $("#hierarchy-info").css("display", "none");                
+    });
+    $("#hierarchy-branch-btn").on("click", function () {
+        // current status is ignoring branches
+        if (cur_ignore_branch_flag) {
+            $("#hierarchy-branch-btn").html("NoBranch");
+            _load_hierarchy_view(false, true);
+            cur_ignore_branch_flag = false;
+        } else {
+            $("#hierarchy-branch-btn").html("Branches");
+            _load_hierarchy_view(true, true);
+            cur_ignore_branch_flag = true;
+        }
+    });
 }
 
 // A recursive helper function for performing some setup by walking through all nodes
@@ -275,15 +337,7 @@ var _visit = function (node) {
 }
 
 var _mouseover = function (d) {
-    $("#hierarchy-info-name").html(d.name);
-    $("#hierarchy-info-location").html(d.location);
-    $("#hierarchy-info-address").html(d.address);
-    $("#hierarchy-info-SIC").html(d.SIC);
-    $("#hierarchy-info-lastUpdate").html(d.lastUpdate);
-    $("#hierarchy-info-completeness").html(d.Completeness);
-    $("#hierarchy-info-hierarchy").html(d.level);
-    $("#hierarchy-info-revenue").html(d.revenue);
-    $("#hierarchy-info").css("display", "unset");
+    update_hierarchy_info(d);
 }
 
 var _mouseout = function (d) {
@@ -293,13 +347,6 @@ var _mouseout = function (d) {
 // Toggle children on click.
 var _click_node = function (d) {
     if (d3.event.defaultPrevented) return; // click suppressed
-    d = _toggleChildren(d);
-    update_hierarchy_view(d);
-    center_node(d);
-}
-
-// Toggle children function
-var _toggleChildren = function (d) {
     if (d.children) {
         d._children = d.children;
         d.children = null;
@@ -307,14 +354,18 @@ var _toggleChildren = function (d) {
         d.children = d._children;
         d._children = null;
     }
-    return d;
+    update_hierarchy_view(d);
+    // center_node(d);
 }
 
 var _click_name = function (d) {
-    $(".selectedText").removeClass('selectedText');
-    $(this).addClass('selectedText');
+    $(".highlight-text").removeClass("highlight-text");
+    $(".selected-text").removeClass('selected-text');
+    $(this).addClass('selected-text');
+    defaultCenter = d.id;
     update_map_view(d.id);
     update_tornado_view(d.id);
+    center_node(defaultCenter, false);
 }
 
 var _get_node_opacity = function (d) {
