@@ -290,6 +290,18 @@ var update_hierarchy_info = function (d) {
     $("#hierarchy-info").css("display", "inline-block");
 }
 
+var filter_hierarchy_view = function (filter_list) {
+    for (var dun_id in idNodeDict) {
+        if (filter_list.indexOf(dun_id) >= 0) {
+            $("#text" + dun_id).css("opacity", 0.2);
+            $("#circle" + dun_id).css("opacity", 0.2);
+        } else {
+            $("#text" + dun_id).css("opacity", 1);
+            $("#circle" + dun_id).css("opacity", 1);
+        }
+    }
+}
+
 var _init_hierarchy_control = function () {
     if (cur_ignore_branch_flag) {
         $("#hierarchy-branch-btn").html("Branches");

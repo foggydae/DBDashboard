@@ -18,6 +18,7 @@ var cur_ignore_branch_flag = HIERARCHY_IGNORE_BRANCHES;
 init_hierarchy_view();
 init_map_view();
 init_tornado_view();
+init_search_view();
 init_stat_view();
 init_summary_view();
 

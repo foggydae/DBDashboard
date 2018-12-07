@@ -51,7 +51,7 @@ var draw_tornado_view = function(data) {
 	draw_tornado_chart("#tornado-head-chart-div", data[0], y_scale, rev_scale, emp_scale, true);
 
 	$("#tornado-body-container").empty();
-	$("#tornado-body-container").css("max-height", $("#tornado-container").height() - $("#tornado-head-container").height() - 5);
+	$("#tornado-body-container").css("max-height", $("#tornado-container").height() - $("#tornado-head-container").height() - $("#tornado-control").height() - 5);
 	for (var i = 1; i < data.length; i++) {
 		var cur_data = data[i];
 		var new_element = "<div class='tornado-base-container tornado-siblings'>" +

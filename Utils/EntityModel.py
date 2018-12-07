@@ -500,6 +500,31 @@ class EntityModel():
         return siblings_list
 
 
+    def get_lob_list(self):
+        return sorted(list(self.company_df["LOB"].unique()))
+
+
+    def filter_word(self, keyword, dun_id):
+        if keyword in self.entity_dict[dun_id]["name"].lower():
+            return True
+        if keyword in self.entity_dict[dun_id]["location"].lower():
+            return True
+        if keyword in self.entity_dict[dun_id]["address"].lower():
+            return True
+        return False
+
+    def filter_lob(self, lob_set, dun_id):
+        if len(lob_set) == 0 or self.entity_dict[dun_id]["LOB"] in lob_set:
+            return True
+        return False
+
+
+    def filter_entity(self, keyword, lob):
+        keyword = keyword.lower()
+        lob_set = set(lob)
+        result = set([dun_id for dun_id in self.entity_dict if self.filter_word(keyword, dun_id) and self.filter_lob(lob_set, dun_id)])
+        return list(set(self.entity_dict.keys()) - result)
+
 
 if __name__ == '__main__':
     company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']

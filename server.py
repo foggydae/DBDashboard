@@ -82,5 +82,24 @@ def get_stat_data():
         return "NO_DATA"
 
 
+@app.route("/api/get_LOB_list", methods=["GET"])
+def get_LOB_list():
+    try:
+        return json.dumps(entity_model.get_lob_list())
+    except:
+        return "NO_DATA"
+
+
+@app.route("/api/filter/<message>", methods=["GET"])
+def filter(message):
+    message_dict = json.loads(message)
+    keyword = message_dict["keyword"]
+    lob = message_dict["lob"]
+    try:
+        return json.dumps(entity_model.filter_entity(keyword, lob))
+    except:
+        return "NO_DATA"
+
+
 if __name__ == "__main__":
     app.run(debug=True)
