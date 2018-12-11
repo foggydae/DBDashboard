@@ -17,3 +17,10 @@ var NODE_COLOR = {
 }
 
 
+// Sibling Definition
+var DIGITS = 2;				// number of SIC digits 
+var LOGIC = 'OR';
+var MAX_NUM = 30;			// to ensure front-end performance
+
+
+

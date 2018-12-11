@@ -52,6 +52,7 @@ var _load_hierarchy_view = function (ignore_branches=true, centering=false) {
             _visit(treeData);
             // Define the root
             root = treeData;
+            cur_selected_duns = root["children"][0]["id"];
             if (defaultCenter == null || typeof defaultCenter != "string") {
                 defaultCenter = root["children"][0];
             }
@@ -311,6 +312,7 @@ var _init_hierarchy_control = function () {
 
     $("#hierarchy-unselect-btn").on("click", function () {
         defaultCenter = root["children"][0];
+        cur_selected_duns = root["children"][0]["id"];
         $(".highlight-text").removeClass("highlight-text");
         $(".selected-text").removeClass("selected-text");
         update_map_view("ALL");
@@ -375,8 +377,9 @@ var _click_name = function (d) {
     $(".selected-text").removeClass('selected-text');
     $(this).addClass('selected-text');
     defaultCenter = d.id;
-    update_map_view(d.id);
-    update_tornado_view(d.id);
+    cur_selected_duns = d.id;
+    update_map_view(cur_selected_duns);
+    update_tornado_view(cur_selected_duns);
     center_node(defaultCenter, false);
 }
 

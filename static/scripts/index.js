@@ -10,6 +10,8 @@ var root;
 var cur_tornado_data;
 // branch flag for hierarchy and map
 var cur_ignore_branch_flag = HIERARCHY_IGNORE_BRANCHES;
+// current selected node
+var cur_selected_duns;
 
 /********************
  ** Initiate Views **

@@ -66,8 +66,11 @@ def get_summary_data():
 def get_SIC_sibling(message):
     message_dict = json.loads(message)
     selected_duns = message_dict["selected_duns"]
+    digits = message_dict["digits"] # 2
+    logic = message_dict["logic"] # 'OR'
+    max_num = message_dict["max_num"] # 10
     try:
-        return json.dumps(entity_model.find_siblings(selected_duns))
+        return json.dumps(entity_model.find_siblings(selected_duns, digits=digits, logic=logic, max_num=max_num))
     except:
         return "NO_DATA"
 
