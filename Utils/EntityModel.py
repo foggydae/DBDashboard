@@ -4,6 +4,8 @@ from collections import defaultdict
 from geopy import distance
 from geopy.geocoders import DataBC
 from pprint import pprint
+from numpy.linalg import norm
+from numpy import dot
 
 import json
 import math
@@ -498,7 +500,48 @@ class EntityModel():
         siblings_list = [self.entity_dict[case_duns]] + siblings_list
 
         return siblings_list
+    
+    def similarity_score(self, case_duns, weights, SIC = True, digits=2, logic='OR') :
+        sibilings_list = [entity['id'] for entity in self.find_siblings(case_duns, digits, logic, max_num=100)]
+        sibilings_df = self.company_df[self.company_df.CASE_DUNS.isin(sibilings_list)]
+        DUNS_list = sibilings_df['CASE_DUNS']
 
+        # Set the required columns 
+        hierarchy_columns = ["GLOBAL_HIERARCHY_CODE"]
+        revenue_columns = ["SALES_US"]
+        employee_columns = ["EMPLOYEES_HERE"]
+        location_columns = ['longitude', 'latitude']
+        branches_columns = ['branches_count']
+        subsidiary_columns = ['subsidiaries_count']
+        columns_without_DUNS = hierarchy_columns + revenue_columns + employee_columns + branches_columns + subsidiary_columns + location_columns 
+        columns = ["CASE_DUNS"] + columns_without_DUNS
+        
+        # pad weight for location
+        weights.append(weights[-1])
+        
+        # Clean and calculate branches and subsidiaries
+        sibilings_df['subsidiaries_count'] = sibilings_df.apply(lambda x: self.count_subs_branches(x['CASE_DUNS'])[1], axis=1)
+        sibilings_df['branches_count'] = sibilings_df.apply(lambda x: self.count_subs_branches(x['CASE_DUNS'])[0],axis=1)
+        sibilings_df = pd.DataFrame(sibilings_df[columns].values.astype(float), columns=columns)
+        DUNS_mapping = dict(zip(sibilings_df['CASE_DUNS'] , DUNS_list))
+        
+        # Normalize vector columns
+        sibilings_df[columns_without_DUNS] = sibilings_df[columns_without_DUNS].apply(lambda x: (x-x.min())/(x.max()-x.min()))
+    
+        # Apply weights to each column 
+        s_values = sibilings_df.apply(lambda x: x[1:]*weights, axis=1)
+        sibilings_df = pd.concat([sibilings_df['CASE_DUNS'], s_values], axis=1)
+    
+        target = sibilings_df[sibilings_df["CASE_DUNS"] == float(case_duns)]
+        t_value = target[columns_without_DUNS].values.astype(float)[0]
+    
+        # Calculate cosine similarity for each row with respect to the target entity
+        entity_scores = []
+        for i, row in sibilings_df.iterrows():
+            entity_scores.append((self.entity_dict[DUNS_mapping[sibilings_df.loc[i, 'CASE_DUNS']]], dot(s_values.iloc[i].values, t_value) / (norm(s_values.iloc[i].values)*norm(t_value))))
+        
+        # return the sorted entity list from most similar to least similar
+        return [e[0] for e in sorted(entity_scores, key=lambda x:x[1], reverse=True)]
 
     def get_lob_list(self):
         return sorted(list(self.company_df["LOB"].unique()))
@@ -527,16 +570,24 @@ class EntityModel():
 
 
 if __name__ == '__main__':
-    company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
+    #company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
     company_name = "Eaton_gps"
     company_file = open("../dataset/ori_data/" + company_name + ".csv", "r")
-    entity_model = EntityModel(verbose=False)
-    entity_model.upload(company_file)
+    #entity_model = EntityModel(verbose=False)
+    #entity_model.upload(company_file)
     # print(entity_model.count_subs_branches("00001368026"))
     # entity_model.get_data_stats(verbose=True)
+    #company_name = "Eaton_gps"
+    #company_file = open("~/Desktop/data/ori_data/" + company_name + ".csv", "r")
+    entity_model = EntityModel(verbose=False)
+    entity_model.upload(company_file)
+    weights = [0.8, 0.05, 0.05, 0.03, 0.03, 0.04]
+    print(entity_model.similarity_score('00129464363',weights))
+    #print(entity_model.similarity_score('00129464363',weights, False))
+    
 
 
-    print(entity_model.find_siblings("00896331972", digits=2, max_num=40))
+    #print(entity_model.find_siblings("00896331972", digits=2, max_num=40))
 
     # message = {
     #     "count_dict": entity_model.get_data_stats(verbose=True),
