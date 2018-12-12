@@ -26,7 +26,15 @@ var init_search_view = function () {
 	            console.log("Error", "Failed in filter data.");
 	        } else {
 	            var filtered = JSON.parse(rtn_string);
+	            console.log(filtered);
 	            filter_hierarchy_view(filtered);
+	            if (keyword in idNodeDict) {
+	            	center_node(keyword, false);
+	            } else {
+	            	if (filtered.length == 1) {
+		            	center_node(filtered[0], false);
+	            	}
+	            }
 	        }
 	    });	
     });

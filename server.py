@@ -116,10 +116,10 @@ def recommend(message):
     weights = message_dict["weights"]
     digits = message_dict["digits"]
     logic = message_dict["logic"]
-    try:
-        return json.dumps(entity_model.similarity_score(selected_duns, weights=weights, digits=digits, logic=logic))
-    except:
-        return "NO_DATA"
+    # try:
+    return json.dumps(entity_model.similarity_score(selected_duns, weights=weights, digits=digits, logic=logic))
+    # except:
+    #     return "NO_DATA"
 
 
 if __name__ == "__main__":

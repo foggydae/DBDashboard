@@ -41,7 +41,7 @@ class EntityModel():
         # self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
         self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:math.sqrt(math.sqrt(float(x))) * 1.8 + 3) # scale number of employee to size
 
-        with open("./Utils/sic_dict.json", "r") as f:
+        with open("../DBDashboard/Utils/sic_dict.json", "r") as f:
             sic_dict = json.load(f)
 
         self.max_level = 0
@@ -65,8 +65,8 @@ class EntityModel():
 
     def _get_entity_dict(self, company_df, sic_dict):
         '''
-		Extract info dict from the pandas dataframe.
-		'''
+        Extract info dict from the pandas dataframe.
+        '''
         global_ultimates = {}
         roots = set()
         feature_included = {'id', 'name', 'size', 'sizeTotal', 'empNum', 'revenue', 'lastUpdate', 'address', 'LOB',
@@ -483,48 +483,49 @@ class EntityModel():
         siblings_list = [self.entity_dict[case_duns]] + siblings_list
 
         return siblings_list
-    
-    def similarity_score(self, case_duns, weights, digits=2, logic='OR'):
-        sibilings_list = [entity['id'] for entity in self.find_siblings(case_duns, digits, logic, max_num=100)]
-        sibilings_df = self.company_df[self.company_df.CASE_DUNS.isin(sibilings_list)]
-        DUNS_list = sibilings_df['CASE_DUNS']
 
-        # Set the required columns 
-        hierarchy_columns = ["GLOBAL_HIERARCHY_CODE"]
-        revenue_columns = ["SALES_US"]
-        employee_columns = ["EMPLOYEES_HERE"]
-        location_columns = ['longitude', 'latitude']
-        branches_columns = ['branches_count']
-        subsidiary_columns = ['subsidiaries_count']
-        columns_without_DUNS = hierarchy_columns + revenue_columns + employee_columns + branches_columns + subsidiary_columns + location_columns 
-        columns = ["CASE_DUNS"] + columns_without_DUNS
-        
+    def similarity_score(self, case_duns, weights, digits=2, logic='OR'):
+        def calc_cosine_similarity(row1, row2):
+            norm1 = norm(row1)
+            norm2 = norm(row2)
+            if norm1 == 0 or norm2 == 0:
+                return 0
+            else:
+                return np.inner(row1, row2) / (norm1 * norm2)
+
+        # Set the required columns
+        columns = ["id", "level", "revenue", "empNum", 'branches_count', 'subsidiaries_count', 'longitude', 'latitude']
         # pad weight for location
         weights.append(weights[-1])
+        weights = np.array(weights) + 0.00001
         
-        # Clean and calculate branches and subsidiaries
-        sibilings_df['subsidiaries_count'] = sibilings_df.apply(lambda x: self.count_subs_branches(x['CASE_DUNS'])[1], axis=1)
-        sibilings_df['branches_count'] = sibilings_df.apply(lambda x: self.count_subs_branches(x['CASE_DUNS'])[0],axis=1)
-        sibilings_df = pd.DataFrame(sibilings_df[columns].values.astype(float), columns=columns)
-        DUNS_mapping = dict(zip(sibilings_df['CASE_DUNS'] , DUNS_list))
-        
-        # Normalize vector columns
-        sibilings_df[columns_without_DUNS] = sibilings_df[columns_without_DUNS].apply(lambda x: (x-x.min())/(x.max()-x.min()))
-    
-        # Apply weights to each column 
-        s_values = sibilings_df.apply(lambda x: x[1:]*weights, axis=1)
-        sibilings_df = pd.concat([sibilings_df['CASE_DUNS'], s_values], axis=1)
-    
-        target = sibilings_df[sibilings_df["CASE_DUNS"] == float(case_duns)]
-        t_value = target[columns_without_DUNS].values.astype(float)[0]
-    
-        # Calculate cosine similarity for each row with respect to the target entity
-        entity_scores = []
-        for i, row in sibilings_df.iterrows():
-            entity_scores.append((self.entity_dict[DUNS_mapping[sibilings_df.loc[i, 'CASE_DUNS']]], dot(s_values.iloc[i].values, t_value) / (norm(s_values.iloc[i].values)*norm(t_value))))
-        
-        # return the sorted entity list from most similar to least similar
-        return [self.entity_dict[case_duns]] + [e[0] for e in sorted(entity_scores, key=lambda x:x[1], reverse=True) if e[0]["id"] != case_duns]
+        # prepare dataframe
+        siblings = self.find_siblings(case_duns, digits, logic, max_num=100) # without the selected_case
+        siblings_df = pd.DataFrame(siblings)
+        siblings_df['branches_count'] = siblings_df["id"].apply(lambda x: self.count_subs_branches(x)[0])
+        siblings_df['subsidiaries_count'] = siblings_df["id"].apply(lambda x: self.count_subs_branches(x)[1])
+        siblings_df = siblings_df[columns]
+
+        siblings_df['level'] = siblings_df['level'].astype(float)
+        siblings_df['revenue'] = siblings_df['revenue'].astype(float)
+        siblings_df['empNum'] = siblings_df['empNum'].astype(float)
+        siblings_df['longitude'] = siblings_df['longitude'].astype(float)
+        siblings_df['latitude'] = siblings_df['latitude'].astype(float)
+        id_columns = siblings_df["id"]
+        siblings_df.drop(columns=["id"], inplace=True)
+
+        # normalize & weight
+        normalized_df = (siblings_df - siblings_df.min()) / (siblings_df.max() - siblings_df.min())
+        weighted_df = normalized_df * weights
+        weighted_df["score"] = weighted_df.apply(lambda row:calc_cosine_similarity(list(row), list(weighted_df.iloc[0])), axis=1)
+        weighted_df["id"] = id_columns
+
+        weighted_df.sort_values(by="score", ascending=False, inplace=True)
+        sorted_duns = list(weighted_df["id"])
+
+        sorted_duns
+        siblings_list = [self.entity_dict[duns_id] for duns_id in sorted_duns if duns_id != case_duns]
+        return [self.entity_dict[case_duns]] + siblings_list
 
     def get_lob_list(self):
         return sorted(list(self.company_df["LOB"].unique()))
@@ -536,6 +537,8 @@ class EntityModel():
         if keyword in self.entity_dict[dun_id]["location"].lower():
             return True
         if keyword in self.entity_dict[dun_id]["address"].lower():
+            return True
+        if keyword in self.entity_dict[dun_id]["id"].lower():
             return True
         return False
 
