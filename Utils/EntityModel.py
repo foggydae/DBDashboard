@@ -41,11 +41,12 @@ class EntityModel():
         # self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:(float(x)/max_employees_here)*9+5) # scale number of employee to size 1-10
         self.company_df['size'] = self.company_df['EMPLOYEES_HERE'].apply(lambda x:math.sqrt(math.sqrt(float(x))) * 1.8 + 3) # scale number of employee to size
 
-
+        with open("./Utils/sic_dict.json", "r") as f:
+            sic_dict = json.load(f)
 
         self.max_level = 0
         self.global_ultimates, self.roots, self.feature_included, self.entity_dict = \
-            self._get_entity_dict(self.company_df)
+            self._get_entity_dict(self.company_df, sic_dict)
         self.virtual_entity_dict = self._create_virtual_entities()
         self.prev_to_now_dict = self._get_prev_to_now_dict(self.company_df)
 
@@ -62,14 +63,15 @@ class EntityModel():
                 prev_to_now[prev_id] = cur_id
         return prev_to_now
 
-    def _get_entity_dict(self, company_df):
+    def _get_entity_dict(self, company_df, sic_dict):
         '''
 		Extract info dict from the pandas dataframe.
 		'''
         global_ultimates = {}
         roots = set()
         feature_included = {'id', 'name', 'size', 'sizeTotal', 'empNum', 'revenue', 'lastUpdate', 'address', 'LOB',
-                            'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'location', 'level'}
+                            'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'SIC_ori', 'location', 'level', 'domestic',
+                            'parent', }
         entity_dict = {}
         # geolocator = DataBC()
         for i, row in company_df.iterrows():
@@ -97,29 +99,11 @@ class EntityModel():
 
             entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '') / len(row))
-            entity_dict[cur_id]['SIC'] = ', '.join(
+            entity_dict[cur_id]['SIC'] = '</br>'.join(
+                [row["SIC" + str(i)] + "-" + sic_dict[row["SIC" + str(i)][:4]].title() for i in range(1, 7) if row["SIC" + str(i)] != ""])
+            entity_dict[cur_id]['SIC_ori'] = ', '.join(
                 [row["SIC" + str(i)] for i in range(1, 7) if row["SIC" + str(i)] != ""])
             entity_dict[cur_id]['location'] = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
-
-            # infer gps information
-            # address1 = row['CASE_ADDRESS1'] + ", " + row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
-            # address2 = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME'] + ", " + row['CASE_COUNTRY_NAME']
-            # address3 = row['CASE_CITY'] + ", " + row['CASE_STATE_NAME']
-            # address4 = row['CASE_CITY'] + ", " + row['CASE_COUNTRY_NAME']
-            # location = geolocator.geocode(address1) \
-            #            or geolocator.geocode(address2) \
-            #            or geolocator.geocode(address3) \
-            #            or geolocator.geocode(address4)
-            # if location:
-            #     entity_dict[cur_id]['latitude'] = location.latitude
-            #     entity_dict[cur_id]['longitude'] = location.longitude
-            #     print(i, address1)
-            #     print(i, location.latitude)
-            # else:
-            #     entity_dict[cur_id]['latitude'] = 'nan'
-            #     entity_dict[cur_id]['longitude'] = 'nan'
-            #     print(address1)
-            #     print(location)
 
             global_ultimates[row["GLOBAL_DUNS"]] = {
                 "name": row["GLOBAL_NAME"], 
@@ -475,8 +459,7 @@ class EntityModel():
                 lat2 = 0
                 lon2 = 0
             return distance.distance((lat1, lon1), (lat2,lon2))
-
-        sics = entity['SIC'].split(sep=', ')
+        sics = entity['SIC_ori'].split(sep=', ')
         if logic == 'OR':
             for sic in sics:
                 if str(sic) != '':

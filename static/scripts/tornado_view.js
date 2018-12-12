@@ -1,7 +1,7 @@
 'use strict';
 
 var HEAD_HEIGHT = 50;
-var BODY_HEIGHT = 31;
+var BODY_HEIGHT = 36;
 var y_scale, rev_scale, emp_scale;
 
 
@@ -28,7 +28,6 @@ var init_tornado_view = function() {
 
 
 var update_tornado_view = function(duns_id) {
-    console.log(duns_id);
     var message = JSON.stringify({
         selected_duns: duns_id,
         digits: DIGITS,
@@ -37,7 +36,7 @@ var update_tornado_view = function(duns_id) {
     });
     $.get("/api/get_SIC_sibling/" + message, function (rtn_string) {
         if (rtn_string == "NO_DATA") {
-            console.log("Error", "Failed in hierarchy data.");
+            console.log("Error", "Failed in tornado data.");
         } else {
             var init_data = JSON.parse(rtn_string);
             cur_tornado_data = init_data;
@@ -75,14 +74,14 @@ var draw_tornado_view = function(data) {
     draw_tornado_chart("#tornado-head-chart-div", data[0], y_scale, rev_scale, emp_scale, true);
 
     $("#tornado-body-container").empty();
-    $("#tornado-body-container").css("max-height", $("#tornado-container").height() - $("#tornado-head-container").height() - $("#tornado-control").height() - 15);
+    $("#tornado-body-container").css("max-height", $("#tornado-container").height() - $("#tornado-head-container").height() - $("#tornado-control").height() - 13);
     for (var i = 1; i < data.length; i++) {
         var cur_data = data[i];
         var new_element = "<div class='tornado-base-container tornado-siblings'>" +
-            "<div id='tornado-" + i + "-name-div' class='col-sm-4 tornado-name'>" + 
+            "<div id='tornado-" + i + "-name-div' class='col-sm-5 tornado-name'>" + 
             "<span id='tornado-" + i + "-name'></span>" +
             "</div>" + 
-            "<div id='tornado-" + i + "-chart-div' class='col-sm-8'></div>"
+            "<div id='tornado-" + i + "-chart-div' class='col-sm-7'></div>"
             "</div>";
         $("#tornado-body-container").append(new_element);
         draw_tornado_name(data[i], i);
@@ -97,7 +96,7 @@ var draw_tornado_name = function (data, index) {
         selector = "#tornado-head-name";
     }
     $(selector).off("click");
-    $(selector).html(data["name"])
+    $(selector).html(data["location"] + "</br><strong>" + data["name"] + "</strong>")
         .css("cursor", "click");
     $(selector + "-div")
         .removeClass("tornado-branch tornado-root tornado-subsidiary")

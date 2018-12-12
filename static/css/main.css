@@ -28,6 +28,10 @@
 	margin-bottom: 0px;
 }
 
+.btn {
+	box-shadow: 0px 0px 3px #aaa;
+}
+
 /**********************/
 /** Customized Style **/
 /**********************/
@@ -182,6 +186,12 @@ body {
 	float: right;
 }
 
+.btn-checked {
+    color: #fff;
+    background-color: #8fbc8f;
+    border-color: #f9f9f9;	
+}
+
 /**********************/
 /***** Search View ****/
 /**********************/
@@ -226,7 +236,7 @@ body {
 
 .non-block-input {
 	display: unset;
-	width: unset;
+	width: inherit;
 }
 
 #tornado-head-container {
@@ -248,6 +258,7 @@ body {
     padding: 5px;
     align-items: center;
     justify-content: space-between;
+	border-bottom: 1px dashed #eee;
 }
 .tornado-base-container {
 	width: 100%;
@@ -258,15 +269,21 @@ body {
 	padding-top: 2px;
 	padding-bottom: 2px; 
 	border-top: solid 1px #ddd;
+	height: 40px;
 }
 
 .tornado-name {
 	display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    font-weight: 600;
-	font-size: 12px;
+/*    align-items: center;
+    justify-content: flex-start;*/
+    /*font-weight: 600;*/
+	font-size: 10px;
 	box-shadow: 2px 0px 3px #ccc;
+	overflow-y: scroll;
+}
+
+.tornado-name > span > strong {
+	font-size: 12px;
 }
 
 .tornado-bar {

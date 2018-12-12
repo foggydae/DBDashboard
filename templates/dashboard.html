@@ -38,6 +38,7 @@
 				<div id="hierarchy-container" class="view-container">
 					<div id="hierarchy-sub-container">
 						<div id="hierarchy-info">
+							<div><span class="info-header">ID: </span>			<span id="hierarchy-info-id"></span></div>
 							<div><span class="info-header">Name: </span>		<span id="hierarchy-info-name"></span></div>
 							<div><span class="info-header">Location: </span>	<span id="hierarchy-info-location"></span></div>
 							<div><span class="info-header">Address:</span>		<span id="hierarchy-info-address"></span></div>
@@ -45,10 +46,11 @@
 							<div><span class="info-header">LastUpdate:</span>	<span id="hierarchy-info-lastUpdate"></span></div>
 							<div><span class="info-header">Completeness:</span>	<span id="hierarchy-info-completeness"></span></div>
 							<div><span class="info-header">HierarchyLevel:</span> <span id="hierarchy-info-hierarchy"></span></div>
-							<div><span class="info-header">Revenue:</span> <span id="hierarchy-info-revenue"></span></div>
+							<div><span class="info-header">Revenue:</span> 		<span id="hierarchy-info-revenue"></span></div>
+							<div><span class="info-header"># Employee:</span> 	<span id="hierarchy-info-empnum"></span></div>
 						</div>
 						<div id="hierarchy-control" class="btn-group">
-							<button id="hierarchy-unselect-btn" class="btn btn-light">Unselect</button>
+							<button id="hierarchy-unselect-btn" class="btn btn-light">Reset</button>
 							<button id="hierarchy-branch-btn" class="btn btn-light">Branches</button>
 						</div>
 					</div>
@@ -71,6 +73,9 @@
 								</div>
 							</div>
 						</div>
+						<div id="weight-container" class="view-container">
+							
+						</div>
 					</div>
 					<div class="col-sm-8 full-height">
 						<div id="tornado-container" class="view-container">
@@ -80,18 +85,12 @@
 								<button id="tornado-update-button" class="btn btn-outline-primary">update</button>
 							</div>
 							<div id="tornado-head-container" class="tornado-base-container">
-								<div id="tornado-head-name-div" class="col-sm-4 tornado-name">
+								<div id="tornado-head-name-div" class="col-sm-5 tornado-name">
 									<span id="tornado-head-name"></span>
 								</div>
-								<div id="tornado-head-chart-div" class="col-sm-8"></div>
+								<div id="tornado-head-chart-div" class="col-sm-7"></div>
 							</div>
 							<div id="tornado-body-container">
-								<div class="tornado-base-container">
-									<div id="tornado-1-name-div" class="col-sm-4 tornado-name">
-										<span id="tornado-1-name"></span>
-									</div>
-									<div id="tornado-1-chart-div" class="col-sm-8"></div>
-								</div>
 							</div>
 						</div>
 					</div>

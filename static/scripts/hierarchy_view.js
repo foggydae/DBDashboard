@@ -52,9 +52,10 @@ var _load_hierarchy_view = function (ignore_branches=true, centering=false) {
             _visit(treeData);
             // Define the root
             root = treeData;
-            cur_selected_duns = root["children"][0]["id"];
             if (defaultCenter == null || typeof defaultCenter != "string") {
                 defaultCenter = root["children"][0];
+                console.log(defaultCenter);
+                cur_selected_duns = root["children"][0]["id"];
             }
             update_hierarchy_view(root);
             if (centering) {
@@ -280,6 +281,7 @@ var highlight_node = function (duns_id) {
 }
 
 var update_hierarchy_info = function (d) {
+    $("#hierarchy-info-id").html(d.id);
     $("#hierarchy-info-name").html(d.name);
     $("#hierarchy-info-location").html(d.location);
     $("#hierarchy-info-address").html(d.address);
@@ -288,6 +290,7 @@ var update_hierarchy_info = function (d) {
     $("#hierarchy-info-completeness").html(d.Completeness);
     $("#hierarchy-info-hierarchy").html(d.level);
     $("#hierarchy-info-revenue").html(d.revenue);
+    $("#hierarchy-info-empnum").html(d.empNum);
     $("#hierarchy-info").css("display", "inline-block");
 }
 
@@ -304,10 +307,8 @@ var filter_hierarchy_view = function (filter_list) {
 }
 
 var _init_hierarchy_control = function () {
-    if (cur_ignore_branch_flag) {
-        $("#hierarchy-branch-btn").html("Branches");
-    } else {
-        $("#hierarchy-branch-btn").html("NoBranch");
+    if (!cur_ignore_branch_flag) {
+        $("#hierarchy-branch-btn").removeClass("btn-light").addClass("btn-checked");
     }
 
     $("#hierarchy-unselect-btn").on("click", function () {
@@ -316,17 +317,18 @@ var _init_hierarchy_control = function () {
         $(".highlight-text").removeClass("highlight-text");
         $(".selected-text").removeClass("selected-text");
         update_map_view("ALL");
+        update_tornado_view(cur_selected_duns);
         center_node(defaultCenter, false);
         $("#hierarchy-info").css("display", "none");                
     });
     $("#hierarchy-branch-btn").on("click", function () {
         // current status is ignoring branches
         if (cur_ignore_branch_flag) {
-            $("#hierarchy-branch-btn").html("NoBranch");
+            $("#hierarchy-branch-btn").removeClass("btn-light").addClass("btn-checked");
             _load_hierarchy_view(false, true);
             cur_ignore_branch_flag = false;
         } else {
-            $("#hierarchy-branch-btn").html("Branches");
+            $("#hierarchy-branch-btn").removeClass("btn-checked").addClass("btn-light");
             _load_hierarchy_view(true, true);
             cur_ignore_branch_flag = true;
         }

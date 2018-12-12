@@ -26,15 +26,19 @@ var init_search_view = function () {
 	            console.log("Error", "Failed in filter data.");
 	        } else {
 	            var filtered = JSON.parse(rtn_string);
-	            console.log(filtered);
 	            filter_hierarchy_view(filtered);
 	        }
 	    });	
-    })
+    });
+
+    $("#search-clear-all-btn").on("click", function () {
+		$('.search-checkbox').removeAttr('checked');    	
+    });
+
 }
 
 var init_LOB_box = function (lob_list) {
-	$("#form-check-container").css("max-height", $("#filter-form").height() - $("#form-keyword-container").height() - $("#form-control-container").height() - 15);
+	$("#form-check-container").css("max-height", $("#filter-form").height() - $("#form-keyword-container").height() - $("#form-control-container").height() - 14);
 	for (var i = 0; i < lob_list.length; i++) {
 		$("#form-check-container").append(
 			"<div class='form-check-base'>" +

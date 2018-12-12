@@ -32,6 +32,7 @@ init_summary_view();
 $(window).resize(function () { 
 	// update hierarchy view
     update_hierarchy_view(root);
-	draw_tornado_view(cur_tornado_data); 
+	draw_tornado_view(cur_tornado_data);
+	$("#form-check-container").css("max-height", $("#filter-form").height() - $("#form-keyword-container").height() - $("#form-control-container").height() - 14);
 });
 
