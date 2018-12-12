@@ -408,7 +408,7 @@ class EntityModel():
 
 
     def get_pnid_list(self):
-        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]} 
+        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns] if key not in {"SIC", "size", "latitude", "longitude"}} 
                 for duns in self.no_parent_set]
 
 
@@ -418,7 +418,7 @@ class EntityModel():
 
 
     def get_metadata(self):
-        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns]}
+        return [{key:{"value":self.entity_dict[duns][key],"status":self._highlight_rules(duns, key)} for key in self.entity_dict[duns] if key not in {"SIC", "size", "latitude", "longitude"}}
                 for duns in self.entity_dict]
 
 
@@ -484,7 +484,7 @@ class EntityModel():
 
         return siblings_list
     
-    def similarity_score(self, case_duns, weights, SIC = True, digits=2, logic='OR') :
+    def similarity_score(self, case_duns, weights, digits=2, logic='OR'):
         sibilings_list = [entity['id'] for entity in self.find_siblings(case_duns, digits, logic, max_num=100)]
         sibilings_df = self.company_df[self.company_df.CASE_DUNS.isin(sibilings_list)]
         DUNS_list = sibilings_df['CASE_DUNS']
@@ -524,7 +524,7 @@ class EntityModel():
             entity_scores.append((self.entity_dict[DUNS_mapping[sibilings_df.loc[i, 'CASE_DUNS']]], dot(s_values.iloc[i].values, t_value) / (norm(s_values.iloc[i].values)*norm(t_value))))
         
         # return the sorted entity list from most similar to least similar
-        return [e[0] for e in sorted(entity_scores, key=lambda x:x[1], reverse=True)]
+        return [self.entity_dict[case_duns]] + [e[0] for e in sorted(entity_scores, key=lambda x:x[1], reverse=True) if e[0]["id"] != case_duns]
 
     def get_lob_list(self):
         return sorted(list(self.company_df["LOB"].unique()))
@@ -565,7 +565,7 @@ if __name__ == '__main__':
     entity_model = EntityModel(verbose=False)
     entity_model.upload(company_file)
     weights = [0.8, 0.05, 0.05, 0.03, 0.03, 0.04]
-    print(entity_model.similarity_score('00129464363',weights))
+    pprint(entity_model.similarity_score('00129464363',weights))
     #print(entity_model.similarity_score('00129464363',weights, False))
     
 

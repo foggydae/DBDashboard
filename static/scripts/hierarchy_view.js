@@ -54,8 +54,10 @@ var _load_hierarchy_view = function (ignore_branches=true, centering=false) {
             root = treeData;
             if (defaultCenter == null || typeof defaultCenter != "string") {
                 defaultCenter = root["children"][0];
-                console.log(defaultCenter);
-                cur_selected_duns = root["children"][0]["id"];
+                if (defaultCenter["type"] == "virtual") {
+                    defaultCenter = root["children"][1];
+                }
+                cur_selected_duns = defaultCenter["id"];
             }
             update_hierarchy_view(root);
             if (centering) {

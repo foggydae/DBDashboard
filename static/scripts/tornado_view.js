@@ -21,7 +21,11 @@ var init_tornado_view = function() {
             $("#tornado-digit-input").css("color", "black");
             LOGIC = tmp_logic;
             DIGITS = tmp_digit;
-            update_tornado_view(cur_selected_duns);
+            if (recommend_flag) {
+                update_recommendation(cur_selected_duns);
+            } else {
+                update_tornado_view(cur_selected_duns);
+            }
         }
     })
 }

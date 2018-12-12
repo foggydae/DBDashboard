@@ -29,6 +29,7 @@
 			<nav class="my-2 my-md-0 mr-md-3">
 				<span id="dataset-tag" class="navbar-brand font-weight-light">Current Dataset: {{filename}}</span>
 			</nav>
+			<button id="phase-II-button" class="btn btn-outline-light">Phase II</button>
 			<button id="summary-button" class="btn btn-outline-light">Summary</button>
 			<a href="/"><button id="reset-button" class="btn btn-outline-light">Reload</button></a>
 		</nav>
@@ -73,8 +74,36 @@
 								</div>
 							</div>
 						</div>
-						<div id="weight-container" class="view-container">
-							
+						<div id="feature-container" class="view-container">
+							<div id="weight-title">
+								<strong>Customize Feature:</strong>
+								<span>Weight range between 0-10</span>
+							</div>
+							<div class="weight-base-container">
+								<label for="hierarchy-level-weight">Hierarchy Level:</label>
+								<input id="hierarchy-level-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<div class="weight-base-container">
+								<label for="revenue-weight">Revenue:</label>
+								<input id="revenue-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<div class="weight-base-container">
+								<label for="employee-number-weight">Employee Number:</label>
+								<input id="employee-number-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<div class="weight-base-container">
+								<label for="branches-weight"># Branches:</label>
+								<input id="branches-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<div class="weight-base-container">
+								<label for="subsidiaries-weight"># Subsidiaries:</label>
+								<input id="subsidiaries-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<div class="weight-base-container">
+								<label for="location-weight">Location:</label>
+								<input id="location-weight" class="form-control weight-input" type="text" placeholder="0">
+							</div>
+							<button id="weight-update-btn" class="btn btn-outline-primary btn-block">Recommend</button>
 						</div>
 					</div>
 					<div class="col-sm-8 full-height">
@@ -235,6 +264,7 @@
 		<script type="text/javascript" src="/static/scripts/hierarchy_view.js"></script>
 		<script type="text/javascript" src="/static/scripts/map_view.js"></script>
 		<script type="text/javascript" src="/static/scripts/search_view.js"></script>
+		<script type="text/javascript" src="/static/scripts/weight_view.js"></script>
 		<script type="text/javascript" src="/static/scripts/tornado_view.js"></script>
 		<script type="text/javascript" src="/static/scripts/stat_view.js"></script>
 		<script type="text/javascript" src="/static/scripts/summary_view.js"></script>

@@ -12,6 +12,8 @@ var cur_tornado_data;
 var cur_ignore_branch_flag = HIERARCHY_IGNORE_BRANCHES;
 // current selected node
 var cur_selected_duns;
+// recommend_flag
+var recommend_flag = false;
 
 /********************
  ** Initiate Views **
@@ -21,6 +23,7 @@ init_hierarchy_view();
 init_map_view();
 init_tornado_view();
 init_search_view();
+init_weight_view();
 init_stat_view();
 init_summary_view();
 

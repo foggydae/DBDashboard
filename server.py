@@ -30,6 +30,7 @@ def get_hierarchy_data(message):
     try:
         return json.dumps(entity_model.get_json_tree(ignore_branches=ignore_branches))
     except:
+        print("hierarchy fail")
         return "NO_DATA"
 
 
@@ -40,6 +41,7 @@ def get_map_data(message):
     try:
         return json.dumps(entity_model.get_gps(duns))
     except:
+        print("map fail")
         return "NO_DATA"
 
 
@@ -72,6 +74,7 @@ def get_SIC_sibling(message):
     try:
         return json.dumps(entity_model.find_siblings(selected_duns, digits=digits, logic=logic, max_num=max_num))
     except:
+        print("siblings fail")
         return "NO_DATA"
 
 
@@ -100,6 +103,21 @@ def filter(message):
     lob = message_dict["lob"]
     try:
         return json.dumps(entity_model.filter_entity(keyword, lob))
+    except:
+        return "NO_DATA"
+
+
+@app.route("/api/recommend/<message>", methods=["GET"])
+def recommend(message):
+    message_dict = json.loads(message)
+    print("recommend")
+    print(message_dict)
+    selected_duns = message_dict["selected_duns"]
+    weights = message_dict["weights"]
+    digits = message_dict["digits"]
+    logic = message_dict["logic"]
+    try:
+        return json.dumps(entity_model.similarity_score(selected_duns, weights=weights, digits=digits, logic=logic))
     except:
         return "NO_DATA"
 
