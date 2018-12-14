@@ -26,7 +26,7 @@ class EntityModel():
     def upload(self, file):
         """
         upload DB csv file; initialize variables associated with the file
-        :param file:
+        :param file: a csv file with the same format as that provided.
         """
 
         self.company_df = pd.read_csv(file, dtype=str)
@@ -55,6 +55,10 @@ class EntityModel():
             self._get_parental_hierarchy()
 
     def _get_prev_to_now_dict(self, company_df):
+        """
+        Build a previous DUNS number to current DUNS number dictionary
+        :param company_df
+        """
         prev_to_now = {}
         for _, row in company_df.iterrows():
             cur_id = row["CASE_DUNS"]
@@ -66,6 +70,7 @@ class EntityModel():
     def _get_entity_dict(self, company_df, sic_dict):
         '''
         Extract info dict from the pandas dataframe.
+        Strore all entity information in entity_dict, whose key is DUNS number.
         '''
         global_ultimates = {}
         roots = set()
@@ -73,7 +78,7 @@ class EntityModel():
                             'latitude', 'longitude', 'type', 'Completeness', 'SIC', 'SIC_ori', 'location', 'level', 'domestic',
                             'parent', }
         entity_dict = {}
-        # geolocator = DataBC()
+        # For each row in the excel file, add into entity_dict
         for i, row in company_df.iterrows():
             cur_id = row["CASE_DUNS"]
             entity_dict[cur_id] = {}
@@ -96,8 +101,8 @@ class EntityModel():
                 feature_included.add('longitude')
             entity_dict[cur_id]['domestic'] = row["DOMESTIC_DUNS"]
             entity_dict[cur_id]['parent'] = row["PARENT_DUNS"]
-
             entity_dict[cur_id]['type'] = self.HIERARCHY_DICT[(row["GLOBAL_STATUS_CODE"], row["SUBSIDIARY_CODE"])]
+
             entity_dict[cur_id]['Completeness'] = "{:.3f}".format(1 - sum(row == '') / len(row))
             entity_dict[cur_id]['SIC'] = '</br>'.join(
                 [row["SIC" + str(i)] + "-" + sic_dict[row["SIC" + str(i)][:4]].title() for i in range(1, 7) if row["SIC" + str(i)] != ""])
@@ -307,6 +312,10 @@ class EntityModel():
         return "no"
 
     def _count_pnids(self):
+        """
+        calculate the missing_parent nodes of the dataset
+        :return:
+        """
         no_parent_tree_size = []
         no_parent_info = []
 
@@ -338,6 +347,9 @@ class EntityModel():
         return no_parent_tree_size, missing_parents
 
     def _count_roots(self):
+        """
+        calculate the number of roots in the dataset.
+        """
         tree_size = []
         for tmp_root in self.roots:
             entity_in_tree = set()
@@ -346,6 +358,9 @@ class EntityModel():
         return tree_size
 
     def count_subs_branches(self, node_duns):
+        """
+        count the number of children under one node. (used in Phase II recommendation)
+        """
         sub_tree_set = set()
         self._traverse_tree(self.family_dict, node_duns, sub_tree_set)
         num_branches = 0
@@ -440,6 +455,16 @@ class EntityModel():
 
 
     def find_siblings(self, case_duns, digits=2, logic='OR', max_num=20):
+        """
+
+        :param case_duns: the DUNS number of currently selected entity
+        :param digits: number of digits used to find siblings
+        :param logic: chocie from 'AND', 'OR'.
+               'AND': a siblings must have ALL the SIC codes that have the first several digits with the selected entity
+               'OR' : a siblings have ANY SIC codes that have the first several digits with the selected entity
+        :param max_num: the maximum number of siblings that will be
+        :return:
+        """
         if case_duns == "INIT":
             case_duns = self.roots[0];
 
@@ -449,6 +474,9 @@ class EntityModel():
         lon1 = float(entity['longitude'])
 
         def _compare_sics(row):
+            """
+            Combine 6 SIC code into one string.
+            """
             sics = ''.join(sorted([row["SIC" + str(i)][:digits] for i in range(1, 7) if row["SIC" + str(i)] != ""]))
             return sics == combined_sics
 
@@ -485,6 +513,9 @@ class EntityModel():
         return siblings_list
 
     def similarity_score(self, case_duns, weights, digits=2, logic='OR'):
+        """
+        calcualte the similarity score between one entity and its siblings. (used in Phase II recommendation)
+        """
         def calc_cosine_similarity(row1, row2):
             norm1 = norm(row1)
             norm2 = norm(row2)
@@ -532,6 +563,11 @@ class EntityModel():
 
 
     def filter_word(self, keyword, dun_id):
+        """
+        :param keyword: keyword to search
+        :param dun_id: DUNS number
+        :return: boolean variable indicate if a keyword is in the record
+        """
         if keyword in self.entity_dict[dun_id]["name"].lower():
             return True
         if keyword in self.entity_dict[dun_id]["location"].lower():
@@ -543,18 +579,25 @@ class EntityModel():
         return False
 
     def filter_lob(self, lob_set, dun_id):
+        """
+        filter entities based on keyword.
+        """
         if len(lob_set) == 0 or self.entity_dict[dun_id]["LOB"] in lob_set:
             return True
         return False
 
 
     def filter_entity(self, keyword, lob):
+        """
+        filter entities based on keyword and line of business
+        """
         keyword = keyword.lower()
         lob_set = set(lob)
         result = set([dun_id for dun_id in self.entity_dict if self.filter_word(keyword, dun_id) and self.filter_lob(lob_set, dun_id)])
         return list(set(self.entity_dict.keys()) - result)
 
 
+# code for debugging 
 if __name__ == '__main__':
     #company_set = ['United_Technologies', 'Ingersoll_Rand', 'Eaton', 'Daikin', 'Captive_Aire']
     company_name = "Eaton_gps"
@@ -570,20 +613,3 @@ if __name__ == '__main__':
     weights = [0.8, 0.05, 0.05, 0.03, 0.03, 0.04]
     pprint(entity_model.similarity_score('00129464363',weights))
     #print(entity_model.similarity_score('00129464363',weights, False))
-    
-
-
-    #print(entity_model.find_siblings("00896331972", digits=2, max_num=40))
-
-    # message = {
-    #     "count_dict": entity_model.get_data_stats(verbose=True),
-    #     "pnid_list": entity_model.get_pnid_list(),
-    #     "global_ultimate_list": entity_model.get_global_ultimates(),
-    #     "metadata_list": entity_model.get_metadata()
-    #     # "filename": cur_file_name
-    # }
-    # pprint(json.dumps(message))
-    # entity_model.get_json_tree(ignore_branches=False)
-    # print(entity_model.find_siblings('00989222823'))
-    # entity_model.get_data_stats(ignore_branches=False)
-    # print('# of no Domestic Parent:', entity_model.no_domestic_parent)
